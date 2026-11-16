@@ -167,6 +167,12 @@ private struct SessionRow: View {
                         .truncationMode(.tail)
                         .frame(maxWidth: 170, alignment: .leading)
 
+                    Text(durationText)
+                        .font(.system(size: 8.5, weight: .regular))
+                        .foregroundStyle(.white.opacity(0.42))
+                        .monospacedDigit()
+                        .fixedSize()
+
                     if showActivity {
                         activityLine
                             .frame(minWidth: 50, maxWidth: .infinity, alignment: .leading)
@@ -192,11 +198,6 @@ private struct SessionRow: View {
         HStack(spacing: 5) {
             badge(style.name, foreground: style.color, background: style.color.opacity(0.14))
 
-            badge(
-                terminalName,
-                foreground: CoderBarPalette.metadataText,
-                background: CoderBarPalette.metadataBackground
-            )
 
             if !modelBadgeText.isEmpty {
                 badge(
@@ -222,11 +223,6 @@ private struct SessionRow: View {
                 )
             }
 
-            badge(
-                durationText,
-                foreground: CoderBarPalette.metadataText,
-                background: CoderBarPalette.metadataBackground
-            )
         }
         .fixedSize(horizontal: true, vertical: false)
     }

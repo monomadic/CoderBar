@@ -67,7 +67,7 @@ enum IslandMetrics {
                 $0 + rowHeight($1, showTasks: showTasks, showSubagents: showSubagents)
             }
             + expandedBottomInset
-        return min(max(contentHeight, 406), maxHeight)
+        return min(contentHeight, maxHeight)
     }
 }
 
