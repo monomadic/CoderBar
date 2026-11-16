@@ -44,7 +44,7 @@ final class NotchViewModel: ObservableObject {
             else { return }
             hoverTimer?.invalidate()
             hoverTimer = Timer.scheduledTimer(
-                withTimeInterval: max(model?.hoverDelaySeconds ?? 0.04, cooldownUntil.timeIntervalSinceNow),
+                withTimeInterval: max(model?.hoverDelaySeconds ?? 0.02, cooldownUntil.timeIntervalSinceNow),
                 repeats: false
             ) { [weak self] _ in
                 MainActor.assumeIsolated {

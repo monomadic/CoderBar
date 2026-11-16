@@ -77,8 +77,8 @@ final class NotchPanelController: NSWindowController, ObservableObject {
     /// The reference panel changes its real window frame continuously. Keeping
     /// the top edge fixed while width and height animate avoids the flash/jump
     /// caused by allocating a full-size transparent canvas first.
-    static let expansionDuration: TimeInterval = 0.24
-    static let collapseDuration: TimeInterval = 0.20
+    static let expansionDuration: TimeInterval = 0.10
+    static let collapseDuration: TimeInterval = 0.10
     /// Keep one point of the window outside the display while it is attached
     /// to the screen edge. AppKit animates origin and size separately; without
     /// this overlap their pixel rounding can expose a one-pixel seam mid-frame.

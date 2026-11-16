@@ -196,7 +196,7 @@ final class AppModel: ObservableObject {
         autoCollapseOnMouseLeave = d.object(forKey: "autoCollapseOnMouseLeave") == nil
             ? true : d.bool(forKey: "autoCollapseOnMouseLeave")
         hoverDelaySeconds = d.object(forKey: "hoverDelaySeconds") == nil
-            ? 0.04 : d.double(forKey: "hoverDelaySeconds")
+            ? 0.02 : d.double(forKey: "hoverDelaySeconds")
         alertDwellSeconds = d.object(forKey: "alertDwellSeconds") == nil
             ? 5 : d.double(forKey: "alertDwellSeconds")
         completionPresentation = d.string(forKey: "completionPresentation") ?? "glance"
