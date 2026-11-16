@@ -117,14 +117,20 @@ struct IslandView: View {
         .opacity
     }
 
+    @ViewBuilder
     private func panelBackground(topRadius: CGFloat, bottomRadius: CGFloat) -> some View {
-        TopAttachedPanelShape(topRadius: topRadius, bottomRadius: bottomRadius)
-            .fill(.ultraThinMaterial)
-            .environment(\.colorScheme, .dark)
-            .overlay {
-                TopAttachedPanelShape(topRadius: topRadius, bottomRadius: bottomRadius)
-                    .fill(Color.black.opacity(0.35))
-            }
+        if island.isExpanded {
+            TopAttachedPanelShape(topRadius: topRadius, bottomRadius: bottomRadius)
+                .fill(Color.black)
+        } else {
+            TopAttachedPanelShape(topRadius: topRadius, bottomRadius: bottomRadius)
+                .fill(.ultraThinMaterial)
+                .environment(\.colorScheme, .dark)
+                .overlay {
+                    TopAttachedPanelShape(topRadius: topRadius, bottomRadius: bottomRadius)
+                        .fill(Color.black.opacity(0.35))
+                }
+        }
     }
 
     private var expandedPanel: some View {
