@@ -110,7 +110,7 @@ public enum DesktopSessionDiscovery {
             sessions.append(contentsOf: result.sessions)
             warnings.append(contentsOf: result.warnings)
         } catch {
-            warnings.append("Codex App 会话发现失败：\(error.localizedDescription)")
+            warnings.append("Could not discover Codex App sessions: \(error.localizedDescription)")
         }
 
         do {
@@ -118,7 +118,7 @@ public enum DesktopSessionDiscovery {
             sessions.append(contentsOf: result.sessions)
             warnings.append(contentsOf: result.warnings)
         } catch {
-            warnings.append("Claude App 会话发现失败：\(error.localizedDescription)")
+            warnings.append("Could not discover Claude App sessions: \(error.localizedDescription)")
         }
 
         return Report(sessions: sessions, warnings: warnings)
@@ -356,7 +356,7 @@ public enum DesktopSessionDiscovery {
                     activity = try codexActivity(at: URL(fileURLWithPath: rolloutPath))
                 } catch {
                     warnings.append(
-                        "Codex \(row.id.prefix(8)) 状态读取失败：\(error.localizedDescription)"
+                        "Codex \(row.id.prefix(8)) could not read status: \(error.localizedDescription)"
                     )
                 }
             }
@@ -367,7 +367,7 @@ public enum DesktopSessionDiscovery {
                     childRows = try JSONDecoder().decode([CodexChildRow].self, from: rawChildren)
                 } catch {
                     warnings.append(
-                        "Codex \(row.id.prefix(8)) 子 Agent 数据无法解析：\(error.localizedDescription)"
+                        "Codex \(row.id.prefix(8)) could not parse subagent data: \(error.localizedDescription)"
                     )
                     childRows = []
                 }
@@ -385,7 +385,7 @@ public enum DesktopSessionDiscovery {
                         childActivity = try codexActivity(at: URL(fileURLWithPath: rolloutPath))
                     } catch {
                         warnings.append(
-                            "Codex 子 Agent \(child.id.prefix(8)) 状态读取失败：\(error.localizedDescription)"
+                            "Codex subagent \(child.id.prefix(8)) could not read status: \(error.localizedDescription)"
                         )
                     }
                 }
@@ -429,8 +429,8 @@ public enum DesktopSessionDiscovery {
                 lastActivityAt: lastActivityAt,
                 statusText: activity.statusText,
                 lastEvent: activity.statusText == "thinking"
-                    ? "Codex App · 正在处理"
-                    : "Codex App · 等待输入",
+                    ? "Codex App · Working"
+                    : "Codex App · Waiting for input",
                 lastTool: activity.lastTool,
                 activeChildAgentIDs: childIDs,
                 lastUserMessage: activity.lastUserMessage ?? cleanPrompt(row.preview),
@@ -581,7 +581,7 @@ public enum DesktopSessionDiscovery {
                 includingPropertiesForKeys: [.isRegularFileKey],
                 options: [.skipsHiddenFiles]
             ) else {
-                warnings.append("无法枚举 Claude App 会话目录：\(root.path)")
+                warnings.append("Could not list Claude App session directory: \(root.path)")
                 continue
             }
 
@@ -606,7 +606,7 @@ public enum DesktopSessionDiscovery {
                     recordsByCLI[cliID] = record
                 } catch {
                     warnings.append(
-                        "Claude 会话文件 \(file.lastPathComponent) 无法解析：\(error.localizedDescription)"
+                        "Claude session file \(file.lastPathComponent) could not be parsed: \(error.localizedDescription)"
                     )
                 }
             }
@@ -630,7 +630,7 @@ public enum DesktopSessionDiscovery {
                     activity = try claudeActivity(at: transcript)
                 } catch {
                     warnings.append(
-                        "Claude \(cliID.prefix(8)) 状态读取失败：\(error.localizedDescription)"
+                        "Claude \(cliID.prefix(8)) could not read status: \(error.localizedDescription)"
                     )
                 }
             }
@@ -654,8 +654,8 @@ public enum DesktopSessionDiscovery {
                 lastActivityAt: lastActivityAt,
                 statusText: activity.statusText,
                 lastEvent: activity.statusText == "thinking"
-                    ? "Claude App · 正在处理"
-                    : "Claude App · 等待输入",
+                    ? "Claude App · Working"
+                    : "Claude App · Waiting for input",
                 lastTool: activity.lastTool,
                 activeChildAgentIDs: [],
                 lastUserMessage: activity.lastUserMessage,
@@ -861,8 +861,8 @@ public enum DesktopSessionDiscovery {
         var errorDescription: String? {
             let detail = stderr.trimmingCharacters(in: .whitespacesAndNewlines)
             return detail.isEmpty
-                ? "\(executable) 退出码 \(exitCode)"
-                : "\(executable) 退出码 \(exitCode)：\(detail)"
+                ? "\(executable) exit code \(exitCode)"
+                : "\(executable) exit code \(exitCode): \(detail)"
         }
     }
 
@@ -872,15 +872,15 @@ public enum DesktopSessionDiscovery {
 
         var errorDescription: String? {
             switch self {
-            case .invalidUTF8(let source): return "\(source) 返回了无效文本"
-            case .cannotEnumerate(let path): return "无法枚举目录：\(path)"
+            case .invalidUTF8(let source): return "\(source) returned invalid text"
+            case .cannotEnumerate(let path): return "Could not list directory: \(path)"
             }
         }
     }
 
     private static func runCommand(executable: String, arguments: [String]) throws -> String {
         guard FileManager.default.isExecutableFile(atPath: executable) else {
-            throw CommandError(executable: executable, exitCode: 127, stderr: "可执行文件不存在")
+            throw CommandError(executable: executable, exitCode: 127, stderr: "Executable not found")
         }
 
         let process = Process()
@@ -895,7 +895,7 @@ public enum DesktopSessionDiscovery {
         let outputData = stdout.fileHandleForReading.readDataToEndOfFile()
         let errorData = stderr.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
-        let errorText = String(data: errorData, encoding: .utf8) ?? "stderr 不是 UTF-8"
+        let errorText = String(data: errorData, encoding: .utf8) ?? "stderr is not UTF-8"
         guard process.terminationStatus == 0 else {
             throw CommandError(
                 executable: executable,

@@ -69,29 +69,29 @@ struct SettingsView: View {
 
     private var generalContent: some View {
         VStack(alignment: .leading, spacing: 18) {
-            settingsGroup("系统") {
-                Toggle("登录时打开", isOn: $model.launchAtLogin)
+            settingsGroup("System") {
+                Toggle("Open at login", isOn: $model.launchAtLogin)
             }
-            settingsGroup("展开") {
-                Toggle("悬停时展开面板", isOn: $model.hoverToExpand)
+            settingsGroup("Expand") {
+                Toggle("Expand panel on hover", isOn: $model.hoverToExpand)
                 valueSlider(
-                    title: "悬停延迟",
+                    title: "Hover delay",
                     value: $model.hoverDelaySeconds,
                     range: 0...0.8,
                     step: 0.05,
-                    suffix: "秒"
+                    suffix: "s"
                 )
             }
-            settingsGroup("收起") {
-                Toggle("鼠标离开时自动收起", isOn: $model.autoCollapseOnMouseLeave)
+            settingsGroup("Collapse") {
+                Toggle("Collapse when pointer leaves", isOn: $model.autoCollapseOnMouseLeave)
                 valueSlider(
-                    title: "提醒停留时间",
+                    title: "Alert duration",
                     value: $model.alertDwellSeconds,
                     range: 2...15,
                     step: 1,
-                    suffix: "秒"
+                    suffix: "s"
                 )
-                Text("点击面板外区域仍会立即收起。")
+                Text("Clicking outside the panel always collapses it immediately.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -100,35 +100,35 @@ struct SettingsView: View {
 
     private var integrationsContent: some View {
         VStack(alignment: .leading, spacing: 18) {
-            settingsGroup("Agent 会话") {
-                Text("已发现 \(model.desktopSessionCount) 个 Codex App / Claude App 会话")
-                Text("桌面会话负责会话列表；Hooks 补充实时工具、审批和提问状态。")
+            settingsGroup("Agent sessions") {
+                Text("Codex / Claude desktop sessions found: \(model.desktopSessionCount)")
+                Text("Desktop apps provide the session list. Hooks add live tool, approval, and question updates.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             settingsGroup("Hooks") {
                 Label(
-                    model.hooksConfigured ? "Hooks 已安装" : "Hooks 尚未安装",
+                    model.hooksConfigured ? "Hooks installed" : "Hooks not installed",
                     systemImage: model.hooksConfigured ? "checkmark.circle.fill" : "exclamationmark.circle"
                 )
                 .foregroundStyle(model.hooksConfigured ? .green : .orange)
                 HStack {
                     if model.hooksConfigured {
-                        Button("重新安装", action: model.configureHooks)
-                        Button("移除", action: model.deconfigureHooks).tint(.red)
+                        Button("Reinstall", action: model.configureHooks)
+                        Button("Remove", action: model.deconfigureHooks).tint(.red)
                     } else {
-                        Button("安装 Hooks", action: model.configureHooks)
+                        Button("Install hooks", action: model.configureHooks)
                             .buttonStyle(.borderedProminent)
                     }
                     Spacer()
-                    Button("打开数据目录", action: model.openDataFolder)
+                    Button("Open data folder", action: model.openDataFolder)
                 }
-                Text("升级后请点“重新安装”，让 Agent 使用包含审批回复通道的新 Hook。")
+                Text("After upgrading, click Reinstall to update agent hooks with approval response support.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             if let warning = model.desktopDiscoveryWarning {
-                settingsGroup("诊断") {
+                settingsGroup("Diagnostics") {
                     Text(warning)
                         .font(.caption)
                         .foregroundStyle(.orange)
@@ -140,24 +140,24 @@ struct SettingsView: View {
 
     private var notificationsContent: some View {
         VStack(alignment: .leading, spacing: 18) {
-            settingsGroup("提醒") {
-                Toggle("Agent 需要处理时发送系统通知", isOn: $model.notificationsEnabled)
-                Toggle("审批或提问时自动展开", isOn: $model.autoExpandOnAlert)
-                Picker("完成提醒", selection: $model.completionPresentation) {
-                    Text("轻瞥（保持收起）").tag("glance")
-                    Text("展开面板").tag("expand")
+            settingsGroup("Alerts") {
+                Toggle("Notify when an agent needs attention", isOn: $model.notificationsEnabled)
+                Toggle("Expand for approvals and questions", isOn: $model.autoExpandOnAlert)
+                Picker("Completion alert", selection: $model.completionPresentation) {
+                    Text("Brief alert (keep collapsed)").tag("glance")
+                    Text("Expand panel").tag("expand")
                 }
                 .pickerStyle(.radioGroup)
-                Button("发送测试通知", action: model.testNotification)
+                Button("Send test notification", action: model.testNotification)
             }
-            settingsGroup("Codex 审批提醒") {
-                Picker("处理方式", selection: $model.codexApprovalMode) {
-                    Text("跟随焦点并展开").tag("followFocus")
-                    Text("只提醒我").tag("notify")
-                    Text("保持安静").tag("silent")
+            settingsGroup("Codex approval alerts") {
+                Picker("Behavior", selection: $model.codexApprovalMode) {
+                    Text("Follow focus and expand").tag("followFocus")
+                    Text("Notify only").tag("notify")
+                    Text("Silent").tag("silent")
                 }
                 .pickerStyle(.radioGroup)
-                Text("保持安静只隐藏 Clone 的提醒，不会自动批准请求。")
+                Text("Silent mode hides CoderBar alerts. It does not automatically approve requests.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -166,57 +166,57 @@ struct SettingsView: View {
 
     private var displayContent: some View {
         VStack(alignment: .leading, spacing: 18) {
-            settingsGroup("屏幕") {
-                Picker("显示器", selection: $model.displayTargetID) {
+            settingsGroup("Screen") {
+                Picker("Display", selection: $model.displayTargetID) {
                     ForEach(model.displayTargetOptions) { option in
                         Text(option.title).tag(option.id)
                     }
                 }
-                Text("“主显示器”固定到硬件主屏，不会跟随当前 App 跳动。")
+                Text("Main display keeps the panel on the primary screen, regardless of the active app.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            settingsGroup("尺寸与字体") {
-                valueSlider(title: "面板宽度", value: $model.panelWidth, range: 440...800, step: 10, suffix: "pt")
-                valueSlider(title: "最大高度", value: $model.maxPanelHeight, range: 280...720, step: 10, suffix: "pt")
-                valueSlider(title: "内容字体", value: $model.contentFontSize, range: 10...16, step: 0.5, suffix: "pt")
+            settingsGroup("Size and font") {
+                valueSlider(title: "Panel width", value: $model.panelWidth, range: 440...800, step: 10, suffix: "pt")
+                valueSlider(title: "Maximum height", value: $model.maxPanelHeight, range: 280...720, step: 10, suffix: "pt")
+                valueSlider(title: "Text size", value: $model.contentFontSize, range: 10...16, step: 0.5, suffix: "pt")
             }
-            settingsGroup("会话卡片") {
-                Toggle("显示项目", isOn: $model.showProjectName)
-                Toggle("显示模型", isOn: $model.showModel)
-                Toggle("显示推理强度", isOn: $model.showReasoningEffort)
-                Toggle("显示任务", isOn: $model.showTasks)
-                Toggle("显示 Sub Agent", isOn: $model.showSubagents)
-                Toggle("显示当前活动", isOn: $model.showActivity)
+            settingsGroup("Session cards") {
+                Toggle("Show project", isOn: $model.showProjectName)
+                Toggle("Show model", isOn: $model.showModel)
+                Toggle("Show reasoning effort", isOn: $model.showReasoningEffort)
+                Toggle("Show tasks", isOn: $model.showTasks)
+                Toggle("Show subagents", isOn: $model.showSubagents)
+                Toggle("Show current activity", isOn: $model.showActivity)
             }
         }
     }
 
     private var soundContent: some View {
         VStack(alignment: .leading, spacing: 18) {
-            settingsGroup("声音") {
-                Toggle("启用声音", isOn: $model.soundsEnabled)
-                valueSlider(title: "音量", value: $model.soundVolume, range: 0...1, step: 0.05, suffix: "")
+            settingsGroup("Sound") {
+                Toggle("Enable sounds", isOn: $model.soundsEnabled)
+                valueSlider(title: "Volume", value: $model.soundVolume, range: 0...1, step: 0.05, suffix: "")
                     .disabled(!model.soundsEnabled)
             }
-            settingsGroup("事件") {
-                Toggle("会话开始", isOn: $model.soundOnStart)
-                Toggle("会话完成", isOn: $model.soundOnCompletion)
-                Toggle("审批、提问与计划确认", isOn: $model.soundOnApproval)
+            settingsGroup("Events") {
+                Toggle("Session started", isOn: $model.soundOnStart)
+                Toggle("Session completed", isOn: $model.soundOnCompletion)
+                Toggle("Approvals, questions, and plan reviews", isOn: $model.soundOnApproval)
             }
         }
     }
 
     private var usageContent: some View {
         VStack(alignment: .leading, spacing: 18) {
-            settingsGroup("用量卡片") {
-                Toggle("在顶部显示 Codex 用量", isOn: $model.showUsage)
-                Picker("百分比", selection: $model.usageShowsRemaining) {
-                    Text("已使用").tag(false)
-                    Text("剩余").tag(true)
+            settingsGroup("Usage card") {
+                Toggle("Show Codex usage at the top", isOn: $model.showUsage)
+                Picker("Percentage", selection: $model.usageShowsRemaining) {
+                    Text("Used").tag(false)
+                    Text("Remaining").tag(true)
                 }
                 .pickerStyle(.segmented)
-                Text("数据直接读取 Codex 会话里的 5h/7d rate limit 窗口。")
+                Text("Usage comes directly from the 5-hour and 7-day rate limit windows in Codex sessions.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -225,14 +225,14 @@ struct SettingsView: View {
 
     private var shortcutsContent: some View {
         VStack(alignment: .leading, spacing: 18) {
-            settingsGroup("面板快捷键") {
-                Toggle("启用面板键盘操作", isOn: $model.panelShortcutsEnabled)
-                shortcutRow("收起面板", key: "Esc")
-                shortcutRow("允许当前审批 / 批准计划", key: "Y")
-                shortcutRow("拒绝当前审批 / 返回修改", key: "N")
-                shortcutRow("选择并提交单题选项", key: "⌘1…⌘9")
-                shortcutRow("跳转当前会话", key: "T")
-                Text("多题和多选仍需在卡片中确认后提交，避免误答。")
+            settingsGroup("Panel shortcuts") {
+                Toggle("Enable panel keyboard shortcuts", isOn: $model.panelShortcutsEnabled)
+                shortcutRow("Collapse panel", key: "Esc")
+                shortcutRow("Allow request / Approve plan", key: "Y")
+                shortcutRow("Deny request / Request changes", key: "N")
+                shortcutRow("Select and submit a single-question answer", key: "⌘1…⌘9")
+                shortcutRow("Open current session", key: "T")
+                Text("For multiple questions or multiple selections, review and submit answers in the card.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -241,24 +241,24 @@ struct SettingsView: View {
 
     private var labsContent: some View {
         VStack(alignment: .leading, spacing: 18) {
-            settingsGroup("更新") {
-                Toggle("接收 Beta 更新", isOn: $model.betaUpdates)
+            settingsGroup("Updates") {
+                Toggle("Receive beta updates", isOn: $model.betaUpdates)
             }
             settingsGroup("Agent App") {
-                Toggle("在岛内处理 Claude 审批与提问", isOn: $model.claudeNativeApprovals)
-                Toggle("优先在 Codex App 打开 app-server 会话", isOn: $model.openAppServerSessionsInCodex)
-                Text("关闭 Claude 处理后，Hook 会立即交还给 Claude 自己的界面。")
+                Toggle("Handle Claude approvals and questions in the panel", isOn: $model.claudeNativeApprovals)
+                Toggle("Prefer Codex App for app-server sessions", isOn: $model.openAppServerSessionsInCodex)
+                Text("When disabled, hooks immediately return approvals and questions to Claude.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            settingsGroup("协议能力") {
-                Label("Claude/Codex Hook：支持审批允许与拒绝", systemImage: "checkmark.circle.fill")
+            settingsGroup("Protocol support") {
+                Label("Claude/Codex hooks: allow or deny requests", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
-                Label("Claude AskUserQuestion：支持选项、自定义答案和多题", systemImage: "checkmark.circle.fill")
+                Label("Claude questions: choices, custom answers, and multiple questions", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
-                Label("Codex App request_user_input：当前为只读并跳回 Codex", systemImage: "info.circle.fill")
+                Label("Codex App questions: read-only; open Codex to answer", systemImage: "info.circle.fill")
                     .foregroundStyle(.orange)
-                Text("Clone 不会把协议不支持的动作伪装成成功。")
+                Text("CoderBar only reports success for actions supported by the protocol.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -272,10 +272,10 @@ struct SettingsView: View {
                 .foregroundStyle(.purple)
             Text("CoderBar").font(.title3.weight(.semibold))
             Text("v\(model.appVersion)").font(.caption).foregroundStyle(.secondary)
-            Text("SwiftUI 顶部 Agent 会话面板").font(.caption).foregroundStyle(.secondary)
+            Text("Agent sessions at the top of your screen").font(.caption).foregroundStyle(.secondary)
             HStack {
-                Button("打开数据目录", action: model.openDataFolder)
-                Button("退出") { NSApp.terminate(nil) }
+                Button("Open data folder", action: model.openDataFolder)
+                Button("Quit") { NSApp.terminate(nil) }
             }
         }
         .frame(maxWidth: .infinity)
@@ -343,15 +343,15 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .general: return "通用"
-        case .integrations: return "集成"
-        case .notifications: return "通知"
-        case .display: return "显示"
-        case .sound: return "声音"
-        case .usage: return "用量"
-        case .shortcuts: return "快捷键"
-        case .labs: return "实验室"
-        case .about: return "关于"
+        case .general: return "General"
+        case .integrations: return "Integrations"
+        case .notifications: return "Notifications"
+        case .display: return "Display"
+        case .sound: return "Sound"
+        case .usage: return "Usage"
+        case .shortcuts: return "Shortcuts"
+        case .labs: return "Labs"
+        case .about: return "About"
         }
     }
 

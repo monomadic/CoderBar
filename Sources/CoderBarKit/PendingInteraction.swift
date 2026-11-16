@@ -97,7 +97,7 @@ public struct PendingInteraction: Equatable, Sendable {
                 kind: .approval,
                 hookEventName: "PermissionRequest",
                 toolName: payload.toolName,
-                title: "需要审批",
+                title: "Approval required",
                 detail: approvalDetail(payload),
                 originalToolInput: payload.toolInput,
                 canRespond: true,
@@ -121,8 +121,8 @@ public struct PendingInteraction: Equatable, Sendable {
                 kind: .planReview,
                 hookEventName: "PreToolUse",
                 toolName: payload.toolName,
-                title: "计划待确认",
-                detail: payload.toolInput?["plan"]?.stringValue ?? "Agent 已完成计划，等待你的决定。",
+                title: "Plan review required",
+                detail: payload.toolInput?["plan"]?.stringValue ?? "The agent has prepared a plan and is waiting for your decision.",
                 originalToolInput: payload.toolInput,
                 canRespond: true,
                 createdAt: at
@@ -146,7 +146,7 @@ public struct PendingInteraction: Equatable, Sendable {
             kind: .question,
             hookEventName: "CodexAppServer",
             toolName: "request_user_input",
-            title: "Codex 正在提问",
+            title: "Codex has a question",
             detail: nil,
             questions: questions,
             originalToolInput: object,
@@ -169,7 +169,7 @@ public struct PendingInteraction: Equatable, Sendable {
                 kind: .question,
                 hookEventName: "ClaudeTranscript",
                 toolName: name,
-                title: "Claude 正在提问",
+                title: "Claude has a question",
                 detail: nil,
                 questions: questions,
                 originalToolInput: input,
@@ -183,8 +183,8 @@ public struct PendingInteraction: Equatable, Sendable {
                 kind: .planReview,
                 hookEventName: "ClaudeTranscript",
                 toolName: name,
-                title: "计划待确认",
-                detail: input["plan"]?.stringValue ?? "Claude 已完成计划，等待你的决定。",
+                title: "Plan review required",
+                detail: input["plan"]?.stringValue ?? "Claude has prepared a plan and is waiting for your decision.",
                 originalToolInput: input,
                 canRespond: false,
                 createdAt: createdAt
@@ -206,7 +206,7 @@ public struct PendingInteraction: Equatable, Sendable {
             kind: .question,
             hookEventName: event,
             toolName: payload.toolName,
-            title: "Agent 正在提问",
+            title: "The agent has a question",
             detail: questions.isEmpty ? payload.question ?? payload.prompt : nil,
             questions: questions,
             originalToolInput: payload.toolInput,
@@ -252,6 +252,6 @@ public struct PendingInteraction: Equatable, Sendable {
         if let command = payload.toolInput?["command"]?.stringValue { return command }
         if let path = payload.toolInput?["file_path"]?.stringValue { return path }
         if let prompt = payload.prompt, !prompt.isEmpty { return prompt }
-        return payload.toolName.map { "允许执行 \($0)？" }
+        return payload.toolName.map { "Allow \($0)?" }
     }
 }

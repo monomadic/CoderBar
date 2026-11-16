@@ -153,8 +153,8 @@ final class AppModel: ObservableObject {
 
     var displayTargetOptions: [DisplayTargetOption] {
         var options = [
-            DisplayTargetOption(id: "main", title: "主显示器"),
-            DisplayTargetOption(id: "focus", title: "跟随焦点"),
+            DisplayTargetOption(id: "main", title: "Main display"),
+            DisplayTargetOption(id: "focus", title: "Follow focus"),
         ]
         options.append(contentsOf: NSScreen.screens.map { screen in
             DisplayTargetOption(
@@ -238,7 +238,7 @@ final class AppModel: ObservableObject {
                 withIntermediateDirectories: true
             )
         } catch {
-            serverError = "无法创建 Hook 状态目录：\(error.localizedDescription)"
+            serverError = "Could not create hook state directory: \(error.localizedDescription)"
             NSLog("could not create hook state directory: \(error)")
         }
         writeHookPreferences()
@@ -289,7 +289,7 @@ final class AppModel: ObservableObject {
                 NSLog("could not publish event server port: \(error)")
                 let message = error.localizedDescription
                 Task { @MainActor in
-                    AppModel.shared.serverError = "Hook 端口文件写入失败：\(message)"
+                    AppModel.shared.serverError = "Could not write hook port file: \(message)"
                     AppModel.shared.isTracking = false
                 }
             }
@@ -382,7 +382,7 @@ final class AppModel: ObservableObject {
 
     private func applyDesktopDiscovery(_ report: DesktopSessionDiscovery.Report) {
         guard let store else {
-            let message = "桌面会话发现成功，但 SessionStore 不可用"
+            let message = "Desktop sessions were discovered, but SessionStore is unavailable"
             if desktopDiscoveryWarning != message {
                 NSLog("CoderBar %@", message)
             }
@@ -464,7 +464,7 @@ final class AppModel: ObservableObject {
             ], options: [.prettyPrinted, .sortedKeys])
             try data.write(to: url, options: .atomic)
         } catch {
-            serverError = "Hook 偏好写入失败：\(error.localizedDescription)"
+            serverError = "Could not save hook preferences: \(error.localizedDescription)"
             NSLog("CoderBar could not write hook preferences: %@", String(describing: error))
         }
     }
@@ -486,7 +486,7 @@ final class AppModel: ObservableObject {
         answers: [String: [String]] = [:]
     ) {
         guard interaction.canRespond else {
-            interactionErrors[sessionID] = "这个请求来自桌面会话文件，需要回到 Agent App 处理。"
+            interactionErrors[sessionID] = "This request comes from a desktop session. Return to the agent app to respond."
             return
         }
 
@@ -508,7 +508,7 @@ final class AppModel: ObservableObject {
                 String(allow)
             )
         } catch {
-            let message = "回复失败：\(error.localizedDescription)"
+            let message = "Could not send response: \(error.localizedDescription)"
             interactionErrors[sessionID] = message
             NSLog("CoderBar %@", message)
         }
@@ -639,9 +639,9 @@ private enum InteractionReplyError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .invalidRequestID: return "请求标识不安全"
-        case .invalidToolInput: return "原始工具参数无法编码"
-        case .missingAnswer(let question): return "问题尚未回答：\(question)"
+        case .invalidRequestID: return "Unsafe request identifier"
+        case .invalidToolInput: return "Could not encode the original tool arguments"
+        case .missingAnswer(let question): return "Question not answered: \(question)"
         }
     }
 }

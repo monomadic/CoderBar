@@ -10,8 +10,8 @@ public enum TerminalActivator {
             switch self {
             case .activated(let appName, let precise):
                 return precise
-                    ? "已跳转到 \(appName) 的对应会话"
-                    : "已打开 \(appName)；当前事件没有精确窗口标识"
+                    ? "Opened the matching session in \(appName)"
+                    : "Opened \(appName); this event does not identify a specific window"
             case .unavailable(let reason):
                 return reason
             }
@@ -61,7 +61,7 @@ public enum TerminalActivator {
         if session.source == "codex",
            session.dataOrigin == "codex-desktop",
            !allowCodexDeepLink {
-            return .unavailable(reason: "设置已关闭 Codex App 会话跳转")
+            return .unavailable(reason: "Opening Codex App sessions is disabled in settings")
         }
 
         if session.source == "claude_desktop",
@@ -89,7 +89,7 @@ public enum TerminalActivator {
             let didActivate = app.activate(options: [.activateAllWindows])
             guard didActivate else {
                 let result = ActivationResult.unavailable(
-                    reason: "找到了 \(target.name)，但 macOS 拒绝激活它"
+                    reason: "Found \(target.name), but macOS refused to activate it"
                 )
                 NSLog("CoderBar session activation failed: %@", result.message)
                 return result
@@ -100,11 +100,11 @@ public enum TerminalActivator {
             return .activated(appName: target.name, precise: false)
         }
 
-        let names = candidates.map(\.name).joined(separator: "、")
+        let names = candidates.map(\.name).joined(separator: ", ")
         let result = ActivationResult.unavailable(
             reason: names.isEmpty
-                ? "这个 session 没有可用的应用定位信息"
-                : "没有找到正在运行的目标应用：\(names)"
+                ? "This session has no app location information"
+                : "Target app is not running: \(names)"
         )
         NSLog(
             "CoderBar session activation unavailable: source=%@ session=%@ reason=%@",

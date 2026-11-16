@@ -183,7 +183,7 @@ private struct SessionRow: View {
                     badges
                 }
 
-                Text("你： \(userMessage)")
+                Text("You: \(userMessage)")
                     .font(.system(size: max(10, contentFontSize - 0.5), weight: .medium))
                     .foregroundStyle(.white.opacity(0.48))
                     .lineLimit(1)
@@ -262,7 +262,7 @@ private struct SessionRow: View {
                 HStack(spacing: 5) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(CoderBarPalette.active.opacity(0.86))
-                    Text("Done — 点击跳回 \(terminalName)")
+                    Text("Done — click to return to \(terminalName)")
                         .foregroundStyle(.white.opacity(0.54))
                         .lineLimit(1)
                     Image(systemName: "arrow.up.right")
@@ -282,7 +282,7 @@ private struct SessionRow: View {
     private var userMessage: String {
         session.lastUserMessage
             ?? session.firstPrompt
-            ?? "等待新的输入"
+            ?? "Waiting for new input"
     }
 
     private var rowTitle: String {
@@ -296,13 +296,13 @@ private struct SessionRow: View {
     private var statusFallback: String {
         if let interaction = session.pendingInteraction {
             switch interaction.kind {
-            case .approval: return "需要你审批后才能继续"
-            case .question: return "需要你回答后才能继续"
-            case .planReview: return "计划等待确认"
+            case .approval: return "Waiting for your approval"
+            case .question: return "Waiting for your answer"
+            case .planReview: return "Waiting for plan approval"
             }
         }
-        if session.statusText == "error" { return "执行失败" }
-        return session.statusText == "thinking" ? "工作中…" : "等待输入"
+        if session.statusText == "error" { return "Failed" }
+        return session.statusText == "thinking" ? "Working…" : "Waiting for input"
     }
 
     private var statusColor: Color {
@@ -324,9 +324,9 @@ private struct SessionRow: View {
 
     private var jumpHelp: String {
         if TerminalActivator.hasPreciseJumpTarget(session) {
-            return "精确跳回 \(terminalName) 的对应会话"
+            return "Return to this session in \(terminalName)"
         }
-        return "打开 \(terminalName)；当前协议没有 Tab 或 Split 标识"
+        return "Open \(terminalName); the protocol does not identify the tab or split"
     }
 
     private var modelBadgeText: String {
@@ -380,7 +380,7 @@ private struct SessionRow: View {
             terminalName,
             modelBadgeText,
             durationText,
-            "你：\(userMessage)",
+            "You: \(userMessage)",
         ]
             .filter { !$0.isEmpty }
             .joined(separator: ", ")
@@ -474,7 +474,7 @@ private struct PendingInteractionCard: View {
                 .font(.system(size: 9.3, weight: .medium, design: .monospaced))
                 .foregroundStyle(.white.opacity(0.55))
             } else {
-                Text(interaction.detail ?? interaction.toolName ?? "等待你的决定")
+                Text(interaction.detail ?? interaction.toolName ?? "Waiting for your decision")
                     .font(.system(size: 9.7, weight: .medium, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.58))
                     .lineLimit(2)
@@ -485,17 +485,17 @@ private struct PendingInteractionCard: View {
                 ApprovalDiffPreview(lines: approvalDiffLines)
             }
 
-            actionButtons(approveTitle: "允许", rejectTitle: "拒绝")
+            actionButtons(approveTitle: "Allow", rejectTitle: "Deny")
         }
     }
 
     private var planContent: some View {
         VStack(alignment: .leading, spacing: 7) {
-            Text(interaction.detail ?? "Agent 已完成计划，等待你的决定。")
+            Text(interaction.detail ?? "The agent has prepared a plan and is waiting for your decision.")
                 .font(.system(size: 9.7, weight: .medium))
                 .foregroundStyle(.white.opacity(0.58))
                 .lineLimit(2)
-            actionButtons(approveTitle: "批准计划", rejectTitle: "返回修改")
+            actionButtons(approveTitle: "Approve plan", rejectTitle: "Request changes")
         }
     }
 
@@ -513,7 +513,7 @@ private struct PendingInteractionCard: View {
 
             HStack {
                 Spacer()
-                Button("提交回答") { onRespond(true, resolvedAnswers) }
+                Button("Submit answers") { onRespond(true, resolvedAnswers) }
                     .buttonStyle(.borderedProminent)
                     .tint(accent)
                     .controlSize(.small)
@@ -526,11 +526,11 @@ private struct PendingInteractionCard: View {
                 .foregroundStyle(.white.opacity(0.64))
                 .lineLimit(3)
             HStack {
-                Text("当前桌面协议只提供只读状态")
+                Text("The desktop protocol currently provides read-only status")
                     .font(.system(size: 8.8))
                     .foregroundStyle(.white.opacity(0.34))
                 Spacer()
-                Button("在 Agent App 中回答", action: onOpenAgent)
+                Button("Answer in agent app", action: onOpenAgent)
                     .buttonStyle(.borderedProminent)
                     .tint(accent)
                     .controlSize(.small)
@@ -596,7 +596,7 @@ private struct PendingInteractionCard: View {
             }
 
             TextField(
-                question.options.isEmpty ? "输入回答" : "自定义回答（可选）",
+                question.options.isEmpty ? "Enter your answer" : "Custom answer (optional)",
                 text: Binding(
                     get: { customAnswers[question.id, default: ""] },
                     set: { customAnswers[question.id] = $0 }
@@ -639,7 +639,7 @@ private struct PendingInteractionCard: View {
                     .tint(accent)
                     .controlSize(.small)
             } else {
-                Button("在 Agent App 中处理", action: onOpenAgent)
+                Button("Open in agent app", action: onOpenAgent)
                     .buttonStyle(.borderedProminent)
                     .tint(accent)
                     .controlSize(.small)
@@ -682,7 +682,7 @@ private struct PendingInteractionCard: View {
     }
 
     private var firstQuestionText: String {
-        interaction.questions.first?.text ?? interaction.detail ?? "Agent 正在等待你的回答。"
+        interaction.questions.first?.text ?? interaction.detail ?? "The agent is waiting for your answer."
     }
 
     private var approvalFilePath: String? {
@@ -894,7 +894,7 @@ private struct TaskPlanCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text("任务（\(completed) 已完成, \(inProgress) 进行中, \(pending) 待处理）")
+            Text("Tasks (\(completed) done, \(inProgress) in progress, \(pending) pending)")
                 .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(.white.opacity(0.42))
                 .lineLimit(1)

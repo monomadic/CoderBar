@@ -179,7 +179,7 @@ struct IslandView: View {
                 Image(systemName: model.soundsEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")
                     .frame(width: 18, height: 18)
             }
-            .help(model.soundsEnabled ? "关闭声音" : "打开声音")
+            .help(model.soundsEnabled ? "Mute sounds" : "Enable sounds")
 
             Button {
                 SettingsWindowController.shared.show(model: model)
@@ -187,7 +187,7 @@ struct IslandView: View {
                 Image(systemName: "gearshape.fill")
                     .frame(width: 18, height: 18)
             }
-            .help("设置")
+            .help("Settings")
         }
         .buttonStyle(.plain)
         .font(.system(size: 12, weight: .semibold))
@@ -235,7 +235,7 @@ struct IslandView: View {
                 .font(.system(size: 27, weight: .medium))
                 .foregroundStyle(.white.opacity(0.28))
 
-            Text("等待会话")
+            Text("Waiting for sessions")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.43))
         }
@@ -263,7 +263,7 @@ struct IslandView: View {
         .buttonStyle(.plain)
         .simultaneousGesture(dragGesture)
         .contextMenu { islandMenu }
-        .help("展开 CoderBar")
+        .help("Expand CoderBar")
     }
 
     private var collapsedIslandContent: some View {
@@ -278,7 +278,7 @@ struct IslandView: View {
             Spacer(minLength: 0)
 
             if !activeSessions.isEmpty {
-                Text("\(activeSessions.count) 个会话")
+                Text("Sessions: \(activeSessions.count)")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.72))
                     .lineLimit(1)
@@ -301,14 +301,14 @@ struct IslandView: View {
 
     private var collapsedActivityLabel: String {
         if let completion = island.completionCard { return "✓ \(completion.title)" }
-        guard let session = activeSessions.first else { return "等待会话" }
-        if island.isAlertFlashing || session.pendingInteraction != nil { return "需要处理" }
+        guard let session = activeSessions.first else { return "Waiting for sessions" }
+        if island.isAlertFlashing || session.pendingInteraction != nil { return "Needs attention" }
         if session.statusText == "thinking" {
-            return session.lastTool?.isEmpty == false ? session.lastTool! : "工作中…"
+            return session.lastTool?.isEmpty == false ? session.lastTool! : "Working…"
         }
-        if session.statusText == "error" { return "执行失败" }
-        if session.lastAssistantMessage?.isEmpty == false { return "已完成" }
-        return "等待中"
+        if session.statusText == "error" { return "Failed" }
+        if session.lastAssistantMessage?.isEmpty == false { return "Completed" }
+        return "Waiting"
     }
 
     private var islandMenu: some View {
@@ -316,15 +316,15 @@ struct IslandView: View {
             Button {
                 SettingsWindowController.shared.show(model: model)
             } label: {
-                Label("设置", systemImage: "gearshape")
+                Label("Settings", systemImage: "gearshape")
             }
             if model.hooksConfigured {
-                Button("移除 hooks", action: model.deconfigureHooks)
+                Button("Remove hooks", action: model.deconfigureHooks)
             } else {
-                Button("安装 hooks", action: model.configureHooks)
+                Button("Install hooks", action: model.configureHooks)
             }
             Divider()
-            Button("退出 CoderBar") { NSApp.terminate(nil) }
+            Button("Quit CoderBar") { NSApp.terminate(nil) }
         }
     }
 
