@@ -113,10 +113,7 @@ struct IslandView: View {
     }
 
     private var expandedContentTransition: AnyTransition {
-        .asymmetric(
-            insertion: .offset(y: -10).combined(with: .opacity),
-            removal: .offset(y: -8).combined(with: .opacity)
-        )
+        .opacity
     }
 
     private func panelBackground(topRadius: CGFloat, bottomRadius: CGFloat) -> some View {

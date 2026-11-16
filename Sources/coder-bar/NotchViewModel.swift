@@ -40,12 +40,11 @@ final class NotchViewModel: ObservableObject {
     func pointerEntered(_ inside: Bool) {
         if inside {
             guard model?.hoverToExpand != false,
-                  !isExpanded,
-                  Date() > cooldownUntil
+                  !isExpanded
             else { return }
             hoverTimer?.invalidate()
             hoverTimer = Timer.scheduledTimer(
-                withTimeInterval: model?.hoverDelaySeconds ?? 0.15,
+                withTimeInterval: max(model?.hoverDelaySeconds ?? 0.04, cooldownUntil.timeIntervalSinceNow),
                 repeats: false
             ) { [weak self] _ in
                 MainActor.assumeIsolated {
@@ -65,10 +64,13 @@ final class NotchViewModel: ObservableObject {
     }
 
     func expand(transient: Bool = false) {
+        guard !isExpanded else { return }
+        cancelScheduledCollapse()
         hoverTimer?.invalidate()
+        hoverTimer = nil
         controller?.setExpanded(true)
         withAnimation(
-            .timingCurve(0.20, 0.78, 0.20, 1.00,
+            .timingCurve(0.42, 0.00, 0.58, 1.00,
                          duration: NotchPanelController.expansionDuration)
         ) {
             isExpanded = true
@@ -88,15 +90,18 @@ final class NotchViewModel: ObservableObject {
     }
 
     func collapse() {
-        collapseTimer?.invalidate()
+        guard isExpanded else { return }
+        hoverTimer?.invalidate()
+        hoverTimer = nil
+        cancelScheduledCollapse()
         withAnimation(
-            .timingCurve(0.40, 0.00, 0.78, 0.32,
+            .timingCurve(0.42, 0.00, 0.58, 1.00,
                          duration: NotchPanelController.collapseDuration)
         ) {
             isExpanded = false
         }
         controller?.setExpanded(false)
-        cooldownUntil = Date().addingTimeInterval(0.35)
+        cooldownUntil = Date().addingTimeInterval(0.12)
     }
 
     func scheduleCollapseAfterMouseLeave() {

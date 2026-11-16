@@ -72,12 +72,13 @@ final class NotchPanelController: NSWindowController, ObservableObject {
     private var eventMonitors: [Any] = []
     private var notificationObservers: [NSObjectProtocol] = []
     private var resizeTask: Task<Void, Never>?
+    private var frameAnimationTimer: Timer?
     private var previousMouseLocation: CGPoint?
     /// The reference panel changes its real window frame continuously. Keeping
     /// the top edge fixed while width and height animate avoids the flash/jump
     /// caused by allocating a full-size transparent canvas first.
-    static let expansionDuration: TimeInterval = 0.42
-    static let collapseDuration: TimeInterval = 0.34
+    static let expansionDuration: TimeInterval = 0.24
+    static let collapseDuration: TimeInterval = 0.20
     /// Keep one point of the window outside the display while it is attached
     /// to the screen edge. AppKit animates origin and size separately; without
     /// this overlap their pixel rounding can expose a one-pixel seam mid-frame.
@@ -104,6 +105,8 @@ final class NotchPanelController: NSWindowController, ObservableObject {
     }
 
     func shutdown() {
+        frameAnimationTimer?.invalidate()
+        frameAnimationTimer = nil
         resizeTask?.cancel()
         resizeTask = nil
         for monitor in eventMonitors {
@@ -224,25 +227,52 @@ final class NotchPanelController: NSWindowController, ObservableObject {
         origin.y = max(origin.y, screenFrame.minY + 4)
 
         let targetFrame = NSRect(origin: origin, size: windowSize)
-        if animated {
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = expanded
-                    ? Self.expansionDuration
-                    : Self.collapseDuration
-                context.timingFunction = expanded
-                    ? CAMediaTimingFunction(controlPoints: 0.20, 0.78, 0.20, 1.00)
-                    : CAMediaTimingFunction(controlPoints: 0.40, 0.00, 0.78, 0.32)
-                panel.animator().setFrame(targetFrame, display: true)
-            }
-        } else {
-            panel.setFrame(targetFrame, display: true)
-        }
+        animateFrame(to: targetFrame, expanded: expanded, animated: animated)
 
         logFrame(
             reason: "position expanded=\(expanded) animated=\(animated)",
             targetFrame: targetFrame,
             screen: screen
         )
+    }
+
+    /// Interpolate the edges as one frame, deriving Y from the anchored top.
+    /// Retargeting always starts from the visible frame, so reversals do not jump.
+    static func interpolatedFrame(from start: NSRect, to end: NSRect, progress: CGFloat) -> NSRect {
+        let t = min(1, max(0, progress))
+        let eased = t * t * (3 - 2 * t)
+        let width = start.width + (end.width - start.width) * eased
+        let height = start.height + (end.height - start.height) * eased
+        let left = start.minX + (end.minX - start.minX) * eased
+        let top = start.maxY + (end.maxY - start.maxY) * eased
+        return NSRect(x: left, y: top - height, width: width, height: height)
+    }
+
+    private func animateFrame(to target: NSRect, expanded: Bool, animated: Bool) {
+        frameAnimationTimer?.invalidate()
+        frameAnimationTimer = nil
+        guard let panel else { return }
+        guard animated, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
+            panel.setFrame(target, display: true)
+            return
+        }
+        let start = panel.frame
+        guard start != target else { return }
+        let startedAt = ProcessInfo.processInfo.systemUptime
+        let duration = expanded ? Self.expansionDuration : Self.collapseDuration
+        let timer = Timer(timeInterval: 1.0 / 120.0, repeats: true) { [weak self] timer in
+            MainActor.assumeIsolated {
+                guard let self, let panel = self.panel else { timer.invalidate(); return }
+                let progress = min(1, (ProcessInfo.processInfo.systemUptime - startedAt) / duration)
+                panel.setFrame(Self.interpolatedFrame(from: start, to: target, progress: progress), display: true)
+                if progress >= 1 {
+                    timer.invalidate()
+                    self.frameAnimationTimer = nil
+                }
+            }
+        }
+        frameAnimationTimer = timer
+        RunLoop.main.add(timer, forMode: .common)
     }
 
     func setExpanded(_ expanded: Bool) {
@@ -582,32 +612,9 @@ final class NotchPanelController: NSWindowController, ObservableObject {
             width: panel.frame.width,
             height: 44
         )
-        let enteredFromBelow = previous.map {
-            $0.y < activationZone.minY
-                && mouse.y >= activationZone.minY
-                && mouse.y > $0.y
-        } ?? false
-        if activationZone.contains(mouse), enteredFromBelow {
-            if ProcessInfo.processInfo.environment["CODERBAR_DEBUG"] != nil {
-                NSLog(
-                    "CoderBar hover entered from below: previous=%@ current=%@ zone=%@",
-                    NSStringFromPoint(previous ?? .zero),
-                    NSStringFromPoint(mouse),
-                    NSStringFromRect(activationZone)
-                )
-            }
+        let wasInside = previous.map { activationZone.contains($0) } ?? false
+        if activationZone.contains(mouse), !wasInside {
             island.zoneEntered()
-        } else if activationZone.contains(mouse),
-                  let previous,
-                  previous.y > activationZone.maxY,
-                  mouse.y <= activationZone.maxY,
-                  ProcessInfo.processInfo.environment["CODERBAR_DEBUG"] != nil {
-            NSLog(
-                "CoderBar hover ignored from above: previous=%@ current=%@ zone=%@",
-                NSStringFromPoint(previous),
-                NSStringFromPoint(mouse),
-                NSStringFromRect(activationZone)
-            )
         } else if !activationZone.contains(mouse) {
             island.pointerEntered(false)
         }
