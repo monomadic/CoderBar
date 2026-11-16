@@ -275,10 +275,15 @@ struct IslandView: View {
             Spacer(minLength: 0)
 
             if !activeSessions.isEmpty {
-                Text("Sessions: \(activeSessions.count)")
+                Text("\(activeSessions.count)")
                     .font(.system(size: 10, weight: .regular))
-                    .foregroundStyle(.white.opacity(0.72))
+                    .monospacedDigit()
+                    .foregroundStyle(.white.opacity(0.82))
                     .lineLimit(1)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(Color(white: 0.20), in: Capsule())
+                    .accessibilityLabel("Sessions: \(activeSessions.count)")
             }
         }
         .padding(.horizontal, 14)
