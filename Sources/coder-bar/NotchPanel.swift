@@ -126,7 +126,7 @@ final class NotchPanelController: NSWindowController, ObservableObject {
         )
         panel.isOpaque = false
         panel.backgroundColor = .clear
-        panel.hasShadow = true
+        panel.hasShadow = false
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
         panel.isFloatingPanel = true
         panel.level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 2)
@@ -155,7 +155,7 @@ final class NotchPanelController: NSWindowController, ObservableObject {
                 calibratedRed: 0.012,
                 green: 0.012,
                 blue: 0.014,
-                alpha: 0.65
+                alpha: 0.35
             )
         )
         panel.contentView = container

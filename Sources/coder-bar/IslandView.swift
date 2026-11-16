@@ -127,7 +127,7 @@ struct IslandView: View {
             .environment(\.colorScheme, .dark)
             .overlay {
                 TopAttachedPanelShape(topRadius: topRadius, bottomRadius: bottomRadius)
-                    .fill(Color.black.opacity(0.78))
+                    .fill(Color.black.opacity(0.35))
             }
     }
 

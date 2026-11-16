@@ -142,10 +142,6 @@ private struct SessionRow: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.white.opacity(isHovering ? 0.06 : 0.02))
-        .overlay {
-            Rectangle().strokeBorder(Color.black, lineWidth: 1)
-                .allowsHitTesting(false)
-        }
         .onHover { isHovering = $0 }
         .animation(.easeOut(duration: 0.16), value: isHovering)
         .help(jumpHelp)
