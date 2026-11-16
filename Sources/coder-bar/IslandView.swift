@@ -3,8 +3,6 @@ import AppKit
 import CoderBarKit
 
 enum IslandMetrics {
-    static let collapsedWidth: CGFloat = 394
-    static let collapsedHeight: CGFloat = 31
     static let expandedWidth: CGFloat = 650
     static let expandedTopBarHeight: CGFloat = 38
     static let sessionRowHeight: CGFloat = 50
@@ -249,8 +247,8 @@ struct IslandView: View {
         } label: {
             collapsedIslandContent
                 .frame(
-                    width: IslandMetrics.collapsedWidth,
-                    height: IslandMetrics.collapsedHeight
+                    width: island.compactWidth,
+                    height: island.compactHeight
                 )
                 .contentShape(
                     TopAttachedPanelShape(topRadius: 0, bottomRadius: 12)
@@ -264,40 +262,27 @@ struct IslandView: View {
     }
 
     private var collapsedIslandContent: some View {
-        HStack(spacing: 7) {
+        HStack(spacing: 0) {
             collapsedAgentMarks
+                .padding(.horizontal, 8)
+                .frame(width: island.compactLeftWidth)
 
-            Text(activeSessions.first?.displayTitle ?? "CoderBar")
-                .font(.system(size: 11.5, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.95))
+            Color.clear
+                .frame(width: island.compactNotchWidth)
+                .accessibilityHidden(true)
+
+            Text("\(activeSessions.count)")
+                .font(.system(size: 10, weight: .regular))
+                .monospacedDigit()
+                .foregroundStyle(.white.opacity(0.82))
                 .lineLimit(1)
-                .truncationMode(.tail)
-                .frame(maxWidth: 160, alignment: .leading)
-
-            HStack(spacing: 5) {
-                Circle()
-                    .fill(collapsedStatusColor)
-                    .frame(width: 5, height: 5)
-                Text(collapsedActivityLabel)
-                    .font(.system(size: 10, weight: .regular))
-                    .foregroundStyle(collapsedStatusColor)
-                    .lineLimit(1)
-            }
-            .frame(minWidth: 40, maxWidth: .infinity, alignment: .leading)
-
-            if !activeSessions.isEmpty {
-                Text("\(activeSessions.count)")
-                    .font(.system(size: 10, weight: .regular))
-                    .monospacedDigit()
-                    .foregroundStyle(.white.opacity(0.82))
-                    .lineLimit(1)
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 3)
-                    .background(Color(white: 0.20), in: Capsule())
-                    .accessibilityLabel("Sessions: \(activeSessions.count)")
-            }
+                .padding(.horizontal, 7)
+                .padding(.vertical, 3)
+                .background(Color(white: 0.20), in: Capsule())
+                .padding(.horizontal, 8)
+                .frame(width: island.compactRightWidth)
+                .accessibilityLabel("Sessions: \(activeSessions.count)")
         }
-        .padding(.horizontal, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
@@ -310,25 +295,6 @@ struct IslandView: View {
             }
         }
         .frame(width: 31, alignment: .leading)
-    }
-
-    private var collapsedStatusColor: Color {
-        guard let session = activeSessions.first else { return .white.opacity(0.38) }
-        if session.pendingInteraction != nil { return .orange }
-        if session.statusText == "error" { return .red }
-        return CoderBarPalette.active
-    }
-
-    private var collapsedActivityLabel: String {
-        if let completion = island.completionCard { return "✓ \(completion.title)" }
-        guard let session = activeSessions.first else { return "Waiting for sessions" }
-        if island.isAlertFlashing || session.pendingInteraction != nil { return "Needs attention" }
-        if session.statusText == "thinking" {
-            return session.lastTool?.isEmpty == false ? session.lastTool! : "Working…"
-        }
-        if session.statusText == "error" { return "Failed" }
-        if session.lastAssistantMessage?.isEmpty == false { return "Completed" }
-        return "Waiting"
     }
 
     private var islandMenu: some View {
@@ -401,30 +367,26 @@ struct AgentApplicationIcon: View {
         .aspectRatio(1, contentMode: .fit)
     }
 
+    // Use the installed application's current artwork, with a packaged fallback.
+    private static let chatGPTIcon: NSImage = {
+        if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.openai.codex") {
+            return NSWorkspace.shared.icon(forFile: appURL.path)
+        }
+        if let url = Bundle.main.url(forResource: "ChatGPT", withExtension: "png"),
+           let image = NSImage(contentsOf: url) {
+            return image
+        }
+        return NSImage(named: NSImage.applicationIconName) ?? NSImage()
+    }()
+
     @ViewBuilder
     private func icon(side: CGFloat) -> some View {
         switch source {
         case "codex":
-            ZStack {
-                RoundedRectangle(cornerRadius: side * 0.28, style: .continuous)
-                    .fill(Color.white.opacity(0.96))
-                RoundedRectangle(cornerRadius: side * 0.23, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [Color(red: 0.50, green: 0.44, blue: 1.0), .blue],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: side * 0.74, height: side * 0.67)
-                HStack(spacing: side * 0.025) {
-                    Image(systemName: "chevron.right")
-                    Capsule()
-                        .frame(width: side * 0.17, height: max(0.8, side * 0.055))
-                }
-                .font(.system(size: side * 0.31, weight: .black))
-                .foregroundStyle(.white)
-            }
+            Image(nsImage: Self.chatGPTIcon)
+                .resizable()
+                .interpolation(.high)
+                .scaledToFit()
         case "claude", "claude_desktop":
             ZStack {
                 RoundedRectangle(cornerRadius: side * 0.27, style: .continuous)

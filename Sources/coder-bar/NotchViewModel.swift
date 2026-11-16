@@ -6,6 +6,13 @@ import CoderBarKit
 /// Mirrors the original's NotchViewModel behaviour.
 @MainActor
 final class NotchViewModel: ObservableObject {
+    @Published var compactNotchWidth: CGFloat = 0
+    @Published var compactHeight: CGFloat = 31
+    @Published var compactRightWidth: CGFloat = 37
+    let compactLeftWidth: CGFloat = 47
+
+    var compactWidth: CGFloat { compactLeftWidth + compactNotchWidth + compactRightWidth }
+
     @Published var isExpanded = false
     @Published var isAlertFlashing = false
     @Published var cycleIndex = 0

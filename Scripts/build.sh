@@ -29,6 +29,8 @@ cp "$BIN/coder-bar-hook" "$BIN/coder-bar-ctl" "$DIST/CoderBar.app/Contents/MacOS
 mkdir -p "$DIST/bin"
 cp "$BIN/coder-bar-hook" "$BIN/coder-bar-ctl" "$DIST/bin/"
 
+cp Resources/ChatGPT.png "$DIST/CoderBar.app/Contents/Resources/ChatGPT.png"
+
 # app icon
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 rm -rf /tmp/coderbaricon-$$ && swift "$SCRIPT_DIR/IconGen.swift" /tmp/coderbaricon-$$.iconset >/dev/null

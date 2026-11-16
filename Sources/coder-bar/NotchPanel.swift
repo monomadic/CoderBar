@@ -200,6 +200,7 @@ final class NotchPanelController: NSWindowController, ObservableObject {
             return
         }
 
+        updateCompactGeometry(for: screen)
         let contentSize = targetSize(expanded: expanded)
         let screenFrame = screen.frame
         let topOffset = max(0, island.dragOffset.height)
@@ -211,7 +212,9 @@ final class NotchPanelController: NSWindowController, ObservableObject {
         )
 
         var origin = CGPoint(
-            x: screenFrame.midX - contentSize.width / 2 + island.dragOffset.width,
+            x: screenFrame.midX - contentSize.width / 2 + island.dragOffset.width
+                + (!expanded && island.compactNotchWidth > 0
+                    ? (island.compactRightWidth - island.compactLeftWidth) / 2 : 0),
             y: desiredTop - contentSize.height
         )
         origin.x = min(
@@ -253,12 +256,11 @@ final class NotchPanelController: NSWindowController, ObservableObject {
     }
 
     func refreshLayout(animated: Bool = true) {
-        guard island.isExpanded else { return }
         resizeTask?.cancel()
         resizeTask = Task { @MainActor [weak self] in
             await Task.yield()
             guard let self, !Task.isCancelled else { return }
-            self.position(expanded: true, animated: animated)
+            self.position(expanded: self.island.isExpanded, animated: animated)
         }
     }
 
@@ -275,11 +277,31 @@ final class NotchPanelController: NSWindowController, ObservableObject {
         logFrame(reason: "drag offset persisted")
     }
 
+    private func updateCompactGeometry(for screen: NSScreen) {
+        let notchWidth: CGFloat
+        if screen.safeAreaInsets.top > 0,
+           let left = screen.auxiliaryTopLeftArea,
+           let right = screen.auxiliaryTopRightArea {
+            notchWidth = max(0, right.minX - left.maxX)
+        } else {
+            notchWidth = 0
+        }
+        let height = notchWidth > 0 ? max(24, screen.safeAreaInsets.top) : 31
+        let count = String(model.store?.visibleActiveSessions.count ?? 0)
+        let countWidth = ceil((count as NSString).size(withAttributes: [
+            .font: NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .regular)
+        ]).width)
+        let rightWidth = max(20, countWidth + 14) + 16
+        if island.compactNotchWidth != notchWidth { island.compactNotchWidth = notchWidth }
+        if island.compactHeight != height { island.compactHeight = height }
+        if island.compactRightWidth != rightWidth { island.compactRightWidth = rightWidth }
+    }
+
     private func targetSize(expanded: Bool) -> CGSize {
         guard expanded else {
             return CGSize(
-                width: IslandMetrics.collapsedWidth,
-                height: IslandMetrics.collapsedHeight
+                width: island.compactWidth,
+                height: island.compactHeight
             )
         }
 
@@ -555,9 +577,9 @@ final class NotchPanelController: NSWindowController, ObservableObject {
         }
 
         let activationZone = NSRect(
-            x: panel.frame.midX - IslandMetrics.collapsedWidth / 2,
+            x: panel.frame.minX,
             y: screen.frame.maxY - 44,
-            width: IslandMetrics.collapsedWidth,
+            width: panel.frame.width,
             height: 44
         )
         let enteredFromBelow = previous.map {
