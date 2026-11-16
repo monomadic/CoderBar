@@ -87,6 +87,7 @@ struct IslandView: View {
 
             if island.isExpanded {
                 expandedPanel
+                    .frame(width: model.panelWidth)
                     .transition(expandedContentTransition)
             } else {
                 collapsedIsland

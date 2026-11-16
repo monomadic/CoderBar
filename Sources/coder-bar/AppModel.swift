@@ -42,6 +42,15 @@ final class AppModel: ObservableObject {
     @Published var hoverDelaySeconds: Double {
         didSet { UserDefaults.standard.set(hoverDelaySeconds, forKey: "hoverDelaySeconds") }
     }
+    @Published var expansionDurationSeconds: Double {
+        didSet { UserDefaults.standard.set(expansionDurationSeconds, forKey: "expansionDurationSeconds") }
+    }
+    @Published var collapseDurationSeconds: Double {
+        didSet { UserDefaults.standard.set(collapseDurationSeconds, forKey: "collapseDurationSeconds") }
+    }
+    @Published var mouseLeaveDelaySeconds: Double {
+        didSet { UserDefaults.standard.set(mouseLeaveDelaySeconds, forKey: "mouseLeaveDelaySeconds") }
+    }
     @Published var alertDwellSeconds: Double {
         didSet { UserDefaults.standard.set(alertDwellSeconds, forKey: "alertDwellSeconds") }
     }
@@ -197,6 +206,12 @@ final class AppModel: ObservableObject {
             ? true : d.bool(forKey: "autoCollapseOnMouseLeave")
         hoverDelaySeconds = d.object(forKey: "hoverDelaySeconds") == nil
             ? 0.02 : d.double(forKey: "hoverDelaySeconds")
+        expansionDurationSeconds = d.object(forKey: "expansionDurationSeconds") == nil
+            ? 0.10 : max(0, min(1, d.double(forKey: "expansionDurationSeconds")))
+        collapseDurationSeconds = d.object(forKey: "collapseDurationSeconds") == nil
+            ? 0.10 : max(0, min(1, d.double(forKey: "collapseDurationSeconds")))
+        mouseLeaveDelaySeconds = d.object(forKey: "mouseLeaveDelaySeconds") == nil
+            ? 0.02 : max(0, min(1, d.double(forKey: "mouseLeaveDelaySeconds")))
         alertDwellSeconds = d.object(forKey: "alertDwellSeconds") == nil
             ? 5 : d.double(forKey: "alertDwellSeconds")
         completionPresentation = d.string(forKey: "completionPresentation") ?? "glance"

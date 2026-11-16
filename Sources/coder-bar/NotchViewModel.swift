@@ -71,7 +71,7 @@ final class NotchViewModel: ObservableObject {
         controller?.setExpanded(true)
         withAnimation(
             .timingCurve(0.42, 0.00, 0.58, 1.00,
-                         duration: NotchPanelController.expansionDuration)
+                         duration: model?.expansionDurationSeconds ?? 0.10)
         ) {
             isExpanded = true
         }
@@ -96,7 +96,7 @@ final class NotchViewModel: ObservableObject {
         cancelScheduledCollapse()
         withAnimation(
             .timingCurve(0.42, 0.00, 0.58, 1.00,
-                         duration: NotchPanelController.collapseDuration)
+                         duration: model?.collapseDurationSeconds ?? 0.10)
         ) {
             isExpanded = false
         }
@@ -112,7 +112,7 @@ final class NotchViewModel: ObservableObject {
               isExpanded,
               collapseTimer == nil
         else { return }
-        collapseTimer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: false) { [weak self] _ in
+        collapseTimer = Timer.scheduledTimer(withTimeInterval: model?.mouseLeaveDelaySeconds ?? 0.02, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated {
                 self?.collapseTimer = nil
                 self?.collapseIfMouseOutside()

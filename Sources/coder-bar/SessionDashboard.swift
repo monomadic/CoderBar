@@ -1033,11 +1033,14 @@ private struct AgentActivityIndicator: View {
 
     var body: some View {
         if isWorking && !reduceMotion {
-            PhaseAnimator([false, true]) { dimmed in
-                indicator(dimmed: dimmed)
-            } animation: { _ in
-                .easeInOut(duration: 0.42)
+            TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+                let phase = timeline.date.timeIntervalSinceReferenceDate / 0.84
+                let opacity = 0.79 + 0.21 * cos(phase * 2 * .pi)
+                indicator(dimmed: false)
+                    .opacity(opacity)
             }
+            // Pulse only opacity; never interpolate icon placement during window resizing.
+            .transaction { $0.animation = nil }
         } else {
             indicator(dimmed: false)
         }

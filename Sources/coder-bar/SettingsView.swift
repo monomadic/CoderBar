@@ -74,16 +74,15 @@ struct SettingsView: View {
             }
             settingsGroup("Expand") {
                 Toggle("Expand panel on hover", isOn: $model.hoverToExpand)
-                valueSlider(
-                    title: "Hover delay",
-                    value: $model.hoverDelaySeconds,
-                    range: 0...0.8,
-                    step: 0.05,
-                    suffix: "s"
-                )
+                timingControl("Hover delay", seconds: $model.hoverDelaySeconds)
+                    .disabled(!model.hoverToExpand)
+                timingControl("Expansion animation", seconds: $model.expansionDurationSeconds)
             }
             settingsGroup("Collapse") {
                 Toggle("Collapse when pointer leaves", isOn: $model.autoCollapseOnMouseLeave)
+                timingControl("Mouse-leave delay", seconds: $model.mouseLeaveDelaySeconds)
+                    .disabled(!model.autoCollapseOnMouseLeave)
+                timingControl("Collapse animation", seconds: $model.collapseDurationSeconds)
                 valueSlider(
                     title: "Alert duration",
                     value: $model.alertDwellSeconds,
@@ -91,6 +90,12 @@ struct SettingsView: View {
                     step: 1,
                     suffix: "s"
                 )
+                Button("Reset timing defaults") {
+                    model.hoverDelaySeconds = 0.02
+                    model.expansionDurationSeconds = 0.10
+                    model.collapseDurationSeconds = 0.10
+                    model.mouseLeaveDelaySeconds = 0.02
+                }
                 Text("Clicking outside the panel always collapses it immediately.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -280,6 +285,27 @@ struct SettingsView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 50)
+    }
+
+    private func timingControl(_ title: String, seconds: Binding<Double>) -> some View {
+        let milliseconds = Binding<Double>(
+            get: { (seconds.wrappedValue * 1000).rounded() },
+            set: { if $0.isFinite { seconds.wrappedValue = min(1000, max(0, $0)) / 1000 } }
+        )
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(title)
+                Spacer()
+                TextField(title, value: milliseconds, format: .number.precision(.fractionLength(0)))
+                    .textFieldStyle(.roundedBorder)
+                    .multilineTextAlignment(.trailing)
+                    .monospacedDigit()
+                    .frame(width: 65)
+                Text("ms").foregroundStyle(.secondary)
+            }
+            Slider(value: milliseconds, in: 0...1000, step: 10)
+                .accessibilityLabel(title)
+        }
     }
 
     private func valueSlider(
