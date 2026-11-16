@@ -112,7 +112,7 @@ final class NotchViewModel: ObservableObject {
               isExpanded,
               collapseTimer == nil
         else { return }
-        collapseTimer = Timer.scheduledTimer(withTimeInterval: 0.30, repeats: false) { [weak self] _ in
+        collapseTimer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated {
                 self?.collapseTimer = nil
                 self?.collapseIfMouseOutside()
