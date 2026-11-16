@@ -165,7 +165,6 @@ private struct SessionRow: View {
                         .foregroundStyle(.white.opacity(0.95))
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .frame(maxWidth: 170, alignment: .leading)
 
                     Text(durationText)
                         .font(.system(size: 8.5, weight: .regular))
@@ -173,21 +172,27 @@ private struct SessionRow: View {
                         .monospacedDigit()
                         .fixedSize()
 
-                    if showActivity {
-                        activityLine
-                            .frame(minWidth: 50, maxWidth: .infinity, alignment: .leading)
-                    } else {
-                        Spacer(minLength: 0)
-                    }
-
+                    Spacer(minLength: 0)
                     badges
                 }
 
-                Text("You: \(userMessage)")
-                    .font(.system(size: max(10, contentFontSize - 0.5), weight: .medium))
-                    .foregroundStyle(.white.opacity(0.48))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
+                HStack(spacing: 6) {
+                    if showProjectName, let projectName {
+                        Text(projectName)
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(projectColor)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(projectBackground, in: RoundedRectangle(cornerRadius: 4))
+                    }
+                    if showActivity {
+                        activityLine
+                            .layoutPriority(1)
+                    }
+                    Spacer(minLength: 0)
+                }
 
             }
         }
@@ -197,7 +202,6 @@ private struct SessionRow: View {
     private var badges: some View {
         HStack(spacing: 5) {
             badge(style.name, foreground: style.color, background: style.color.opacity(0.14))
-
 
             if !modelBadgeText.isEmpty {
                 badge(
@@ -214,15 +218,6 @@ private struct SessionRow: View {
                     background: .purple.opacity(0.13)
                 )
             }
-
-            if session.source == "codex" {
-                badge(
-                    "ChatGPT",
-                    foreground: CoderBarPalette.metadataText,
-                    background: CoderBarPalette.metadataBackground
-                )
-            }
-
         }
         .fixedSize(horizontal: true, vertical: false)
     }
@@ -263,12 +258,36 @@ private struct SessionRow: View {
             ?? "Waiting for new input"
     }
 
+    private var projectName: String? {
+        guard let cwd = session.cwd, !cwd.isEmpty else { return nil }
+        let name = (cwd as NSString).lastPathComponent
+        return name.isEmpty ? nil : name
+    }
+
+    // A stable hash (unlike Swift's randomized Hasher) keeps each project's
+    // color the same across sessions, row ordering, and application launches.
+    private var projectHue: Double {
+        let key = (projectName ?? "").precomposedStringWithCanonicalMapping.lowercased()
+        let hash = key.utf8.reduce(UInt64(14695981039346656037)) {
+            ($0 ^ UInt64($1)) &* 1099511628211
+        }
+        return Double(hash % 3600) / 3600
+    }
+
+    private var projectColor: Color {
+        Color(hue: projectHue, saturation: 0.58, brightness: 1)
+    }
+
+    private var projectBackground: Color {
+        Color(hue: projectHue, saturation: 1, brightness: 1).opacity(0.24)
+    }
+
     private var rowTitle: String {
-        guard !showProjectName else { return session.displayTitle }
-        return session.sessionTitle
-            ?? session.lastUserMessage
-            ?? session.firstPrompt
-            ?? "session \(session.sessionId?.prefix(8) ?? "?")"
+        let title = session.displayTitle
+        if let projectName, title.hasPrefix(projectName + " · ") {
+            return String(title.dropFirst(projectName.count + 3))
+        }
+        return title
     }
 
     private var statusFallback: String {
