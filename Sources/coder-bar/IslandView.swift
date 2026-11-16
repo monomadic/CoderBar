@@ -271,7 +271,7 @@ struct IslandView: View {
             collapsedAgentMarks
 
             Text(collapsedActivityLabel)
-                .font(.system(size: 10.5, weight: .semibold))
+                .font(.system(size: 10.5, weight: .regular))
                 .foregroundStyle(.white.opacity(0.82))
                 .lineLimit(1)
 
@@ -279,7 +279,7 @@ struct IslandView: View {
 
             if !activeSessions.isEmpty {
                 Text("Sessions: \(activeSessions.count)")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.system(size: 10, weight: .regular))
                     .foregroundStyle(.white.opacity(0.72))
                     .lineLimit(1)
             }
