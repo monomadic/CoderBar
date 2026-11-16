@@ -7,7 +7,7 @@ enum IslandMetrics {
     static let collapsedHeight: CGFloat = 31
     static let expandedWidth: CGFloat = 650
     static let expandedTopBarHeight: CGFloat = 38
-    static let sessionRowHeight: CGFloat = 72
+    static let sessionRowHeight: CGFloat = 50
     static let expandedBottomInset: CGFloat = 8
     static let idleHeight: CGFloat = 132
     static let maxExpandedHeight: CGFloat = 482
@@ -67,7 +67,7 @@ enum IslandMetrics {
                 $0 + rowHeight($1, showTasks: showTasks, showSubagents: showSubagents)
             }
             + expandedBottomInset
-        return min(max(contentHeight, idleHeight), maxHeight)
+        return min(max(contentHeight, 406), maxHeight)
     }
 }
 
@@ -127,7 +127,7 @@ struct IslandView: View {
             .environment(\.colorScheme, .dark)
             .overlay {
                 TopAttachedPanelShape(topRadius: topRadius, bottomRadius: bottomRadius)
-                    .fill(Color.black.opacity(0.45))
+                    .fill(Color.black.opacity(0.78))
             }
     }
 
@@ -188,7 +188,7 @@ struct IslandView: View {
         .buttonStyle(.plain)
         .font(.system(size: 12, weight: .semibold))
         .foregroundStyle(.white.opacity(0.68))
-        .padding(.horizontal, 36)
+        .padding(.horizontal, 15)
     }
 
     private var topBarAgentIcon: some View {
@@ -267,12 +267,23 @@ struct IslandView: View {
         HStack(spacing: 7) {
             collapsedAgentMarks
 
-            Text(collapsedActivityLabel)
-                .font(.system(size: 10.5, weight: .regular))
-                .foregroundStyle(.white.opacity(0.82))
+            Text(activeSessions.first?.displayTitle ?? "CoderBar")
+                .font(.system(size: 11.5, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.95))
                 .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(maxWidth: 160, alignment: .leading)
 
-            Spacer(minLength: 0)
+            HStack(spacing: 5) {
+                Circle()
+                    .fill(collapsedStatusColor)
+                    .frame(width: 5, height: 5)
+                Text(collapsedActivityLabel)
+                    .font(.system(size: 10, weight: .regular))
+                    .foregroundStyle(collapsedStatusColor)
+                    .lineLimit(1)
+            }
+            .frame(minWidth: 40, maxWidth: .infinity, alignment: .leading)
 
             if !activeSessions.isEmpty {
                 Text("\(activeSessions.count)")
@@ -299,6 +310,13 @@ struct IslandView: View {
             }
         }
         .frame(width: 31, alignment: .leading)
+    }
+
+    private var collapsedStatusColor: Color {
+        guard let session = activeSessions.first else { return .white.opacity(0.38) }
+        if session.pendingInteraction != nil { return .orange }
+        if session.statusText == "error" { return .red }
+        return CoderBarPalette.active
     }
 
     private var collapsedActivityLabel: String {
@@ -549,7 +567,10 @@ struct TopAttachedPanelShape: InsettableShape {
 }
 
 enum CoderBarPalette {
-    static let active = Color(red: 0.17, green: 0.91, blue: 0.32)
+    static let active = Color(red: 0.12, green: 0.95, blue: 0.34)
+    static let metadataText = Color(red: 4.0 / 255, green: 1, blue: 159.0 / 255)
+    static let metadataBackground = Color(red: 0, green: 217.0 / 255, blue: 1).opacity(0.08)
+    static let codex = Color(red: 158.0 / 255, green: 133.0 / 255, blue: 1)
 }
 
 struct AgentVisualStyle {
@@ -564,7 +585,7 @@ struct AgentVisualStyle {
         case "claude_desktop":
             return .init(name: "Claude", symbol: "sparkles", color: .orange)
         case "codex":
-            return .init(name: "Codex", symbol: "chevron.left.forwardslash.chevron.right", color: .blue)
+            return .init(name: "Codex", symbol: "chevron.left.forwardslash.chevron.right", color: CoderBarPalette.codex)
         case "gemini":
             return .init(name: "Gemini", symbol: "star.fill", color: .purple)
         case "cursor":

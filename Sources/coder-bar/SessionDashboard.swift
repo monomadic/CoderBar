@@ -141,18 +141,10 @@ private struct SessionRow: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background {
-            RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .fill(Color.white.opacity(isHovering ? 0.060 : 0))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 9, style: .continuous)
-                        .stroke(
-                            Color.white.opacity(isHovering ? 0.090 : 0),
-                            lineWidth: 0.7
-                        )
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 2)
+        .background(Color.white.opacity(isHovering ? 0.06 : 0.02))
+        .overlay {
+            Rectangle().strokeBorder(Color.black, lineWidth: 1)
+                .allowsHitTesting(false)
         }
         .onHover { isHovering = $0 }
         .animation(.easeOut(duration: 0.16), value: isHovering)
@@ -177,8 +169,14 @@ private struct SessionRow: View {
                         .foregroundStyle(.white.opacity(0.95))
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .layoutPriority(1)
+                        .frame(maxWidth: 170, alignment: .leading)
+
+                    if showActivity {
+                        activityLine
+                            .frame(minWidth: 50, maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        Spacer(minLength: 0)
+                    }
 
                     badges
                 }
@@ -189,12 +187,9 @@ private struct SessionRow: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
 
-                if showActivity, !session.hasOutstandingPlanItems {
-                    activityLine
-                }
             }
         }
-        .padding(.horizontal, 34)
+        .padding(.horizontal, 20)
     }
 
     private var badges: some View {
@@ -203,15 +198,15 @@ private struct SessionRow: View {
 
             badge(
                 terminalName,
-                foreground: .white.opacity(0.54),
-                background: .white.opacity(0.07)
+                foreground: CoderBarPalette.metadataText,
+                background: CoderBarPalette.metadataBackground
             )
 
             if !modelBadgeText.isEmpty {
                 badge(
                     modelBadgeText,
-                    foreground: .white.opacity(0.58),
-                    background: .white.opacity(0.075)
+                    foreground: CoderBarPalette.metadataText,
+                    background: CoderBarPalette.metadataBackground
                 )
             }
 
@@ -226,57 +221,48 @@ private struct SessionRow: View {
             if session.source == "codex" {
                 badge(
                     "ChatGPT",
-                    foreground: .white.opacity(0.55),
-                    background: .white.opacity(0.075)
+                    foreground: CoderBarPalette.metadataText,
+                    background: CoderBarPalette.metadataBackground
                 )
             }
 
             badge(
                 durationText,
-                foreground: .white.opacity(0.42),
-                background: .white.opacity(0.055)
+                foreground: CoderBarPalette.metadataText,
+                background: CoderBarPalette.metadataBackground
             )
         }
         .fixedSize(horizontal: true, vertical: false)
     }
 
-    @ViewBuilder
     private var activityLine: some View {
-        Group {
-            if let activationError {
-                Text(activationError)
-                    .foregroundStyle(.red.opacity(0.82))
-                    .lineLimit(1)
-            } else if session.statusText == "thinking",
-                      let tool = session.lastTool,
-                      !tool.isEmpty {
-                HStack(spacing: 5) {
-                    Circle()
-                        .fill(style.color)
-                        .frame(width: 5, height: 5)
-                    Text(tool)
-                        .foregroundStyle(style.color.opacity(0.88))
-                        .lineLimit(1)
-                }
-            } else if isCompleted {
-                HStack(spacing: 5) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(CoderBarPalette.active.opacity(0.86))
-                    Text("Done — click to return to \(terminalName)")
-                        .foregroundStyle(.white.opacity(0.54))
-                        .lineLimit(1)
-                    Image(systemName: "arrow.up.right")
-                        .font(.system(size: 8, weight: .bold))
-                        .foregroundStyle(.white.opacity(isHovering ? 0.72 : 0.28))
-                }
-            } else {
-                Text(session.lastAssistantMessage ?? statusFallback)
-                    .foregroundStyle(.white.opacity(0.38))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-            }
+        HStack(spacing: 5) {
+            Circle()
+                .fill(activityColor)
+                .frame(width: 5, height: 5)
+            Text(activityText)
+                .lineLimit(1)
+                .truncationMode(.tail)
         }
-        .font(.system(size: 10.5, weight: .medium))
+        .font(.system(size: 10, weight: .regular))
+        .foregroundStyle(activityColor)
+        .help(activityText)
+    }
+
+    private var activityColor: Color {
+        if activationError != nil || session.statusText == "error" { return .red }
+        if session.pendingInteraction != nil { return .orange }
+        return CoderBarPalette.active
+    }
+
+    private var activityText: String {
+        if let activationError { return activationError }
+        if session.pendingInteraction != nil { return statusFallback }
+        if session.statusText == "thinking", let tool = session.lastTool, !tool.isEmpty {
+            return tool
+        }
+        if isCompleted { return "Done — click to return to \(terminalName)" }
+        return statusFallback
     }
 
     private var userMessage: String {
@@ -308,7 +294,7 @@ private struct SessionRow: View {
     private var statusColor: Color {
         if session.pendingInteraction != nil { return .orange }
         if session.statusText == "error" { return .red }
-        return session.statusText == "thinking" ? style.color : CoderBarPalette.active
+        return CoderBarPalette.active
     }
 
     private var isCompleted: Bool {
@@ -388,13 +374,13 @@ private struct SessionRow: View {
 
     private func badge(_ text: String, foreground: Color, background: Color) -> some View {
         Text(text)
-            .font(.system(size: 8.5, weight: .semibold))
+            .font(.system(size: 8.5, weight: .medium))
             .foregroundStyle(foreground)
             .lineLimit(1)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2.5)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 2)
             .background(
-                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
                     .fill(background)
             )
     }
@@ -1066,25 +1052,21 @@ private struct AgentActivityIndicator: View {
     }
 
     private func indicator(dimmed: Bool) -> some View {
-        HStack(spacing: 5) {
+        HStack(spacing: 4) {
             AgentApplicationIcon(source: source, style: style)
-                .frame(width: 24, height: 24)
-                .opacity(dimmed ? 0.58 : 1)
-                .shadow(
-                    color: style.color.opacity(dimmed ? 0.18 : 0.48),
-                    radius: dimmed ? 2 : 4
-                )
-
-            RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                .fill(statusColor)
-                .frame(width: 4, height: 19)
-                .opacity(dimmed ? 0.08 : 1)
-                .shadow(
-                    color: statusColor.opacity(dimmed ? 0.18 : 0.76),
-                    radius: dimmed ? 2 : 4.5
-                )
+                .frame(width: 15, height: 15)
+            HStack(alignment: .bottom, spacing: 1) {
+                ForEach(0..<3) { index in
+                    Rectangle()
+                        .fill(statusColor.opacity(1 - Double(index) * 0.22))
+                        .frame(width: 3, height: [7.0, 4.0, 3.0][index])
+                }
+            }
+            .frame(width: 11, height: 11, alignment: .bottom)
         }
+        .opacity(dimmed ? 0.58 : 1)
     }
+
 }
 
 private struct AgentStatusDot: View {
