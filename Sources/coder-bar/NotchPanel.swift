@@ -18,7 +18,7 @@ final class NotchPanel: NSPanel {
 /// displayed. Root constraints around `NSHostingView` can make that focus
 /// update request another window constraint pass indefinitely. Autoresizing
 /// keeps the hosting view attached to the panel without participating in that
-/// constraint cycle. The container draws the small opaque top backing itself,
+/// constraint cycle. The container draws the small translucent top backing itself,
 /// so there is no second AppKit view or constraint set to update.
 private final class NotchContentView: NSView {
     private let hostingView: NSView
@@ -142,6 +142,7 @@ final class NotchPanelController: NSWindowController, ObservableObject {
             .environmentObject(model)
         let hostingView = NSHostingView(rootView: rootView)
         hostingView.sizingOptions = []
+        hostingView.focusRingType = .none
 
         // NSHostingView can expose a transparent scanline for one frame while
         // its layer grows. Draw the attached edge in the AppKit container, but
@@ -154,7 +155,7 @@ final class NotchPanelController: NSWindowController, ObservableObject {
                 calibratedRed: 0.012,
                 green: 0.012,
                 blue: 0.014,
-                alpha: 1
+                alpha: 0.65
             )
         )
         panel.contentView = container

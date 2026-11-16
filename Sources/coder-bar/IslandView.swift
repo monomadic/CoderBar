@@ -123,15 +123,11 @@ struct IslandView: View {
 
     private func panelBackground(topRadius: CGFloat, bottomRadius: CGFloat) -> some View {
         TopAttachedPanelShape(topRadius: topRadius, bottomRadius: bottomRadius)
-            .fill(Color(red: 0.012, green: 0.012, blue: 0.014))
+            .fill(.ultraThinMaterial)
+            .environment(\.colorScheme, .dark)
             .overlay {
-                if island.isAlertFlashing {
-                    TopAttachedPanelShape(
-                        topRadius: topRadius,
-                        bottomRadius: bottomRadius
-                    )
-                        .strokeBorder(Color.orange.opacity(0.9), lineWidth: 1.5)
-                }
+                TopAttachedPanelShape(topRadius: topRadius, bottomRadius: bottomRadius)
+                    .fill(Color.black.opacity(0.45))
             }
     }
 
@@ -261,6 +257,7 @@ struct IslandView: View {
                 )
         }
         .buttonStyle(.plain)
+        .focusEffectDisabled()
         .simultaneousGesture(dragGesture)
         .contextMenu { islandMenu }
         .help("Expand CoderBar")
