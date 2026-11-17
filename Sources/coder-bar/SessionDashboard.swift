@@ -45,6 +45,7 @@ struct SessionDashboard: View {
                     ))
                 }
             }
+            .padding(.top, IslandMetrics.expandedListTopInset)
             .padding(.bottom, IslandMetrics.expandedBottomInset)
         }
         .scrollIndicators(.hidden)
@@ -141,7 +142,7 @@ private struct SessionRow: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.white.opacity(isHovering ? 0.06 : 0))
+        .background(Color.white.opacity(isHovering ? 0.06 : 0.02))
         .onHover { isHovering = $0 }
         .animation(.easeOut(duration: 0.16), value: isHovering)
         .help(jumpHelp)
@@ -149,14 +150,14 @@ private struct SessionRow: View {
     }
 
     private var summary: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 4) {
             AgentActivityIndicator(
                 source: session.visualSource,
                 style: style,
                 statusColor: statusColor,
                 isWorking: session.statusText == "thinking"
             )
-            .frame(width: 40)
+            .frame(width: 40, height: IslandMetrics.sessionRowHeight - 14, alignment: .topTrailing)
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
@@ -196,7 +197,7 @@ private struct SessionRow: View {
 
             }
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 9)
     }
 
     private var badges: some View {
@@ -1066,17 +1067,17 @@ private struct AgentActivityIndicator: View {
     }
 
     private func indicator(dimmed: Bool) -> some View {
-        HStack(spacing: 4) {
-            AgentApplicationIcon(source: source, style: style)
-                .frame(width: 15, height: 15)
+        HStack(alignment: .top, spacing: 3) {
             HStack(alignment: .bottom, spacing: 1) {
                 ForEach(0..<3) { index in
                     Rectangle()
-                        .fill(statusColor.opacity(1 - Double(index) * 0.22))
-                        .frame(width: 3, height: [7.0, 4.0, 3.0][index])
+                        .fill(statusColor.opacity(0.56 + Double(index) * 0.22))
+                        .frame(width: 3, height: [3.0, 4.0, 7.0][index])
                 }
             }
-            .frame(width: 11, height: 11, alignment: .bottom)
+            .frame(width: 11, height: 13, alignment: .bottom)
+            AgentApplicationIcon(source: source, style: style)
+                .frame(width: 15, height: 15)
         }
         .opacity(dimmed ? 0.58 : 1)
     }

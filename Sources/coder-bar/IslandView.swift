@@ -3,10 +3,11 @@ import AppKit
 import CoderBarKit
 
 enum IslandMetrics {
-    static let expandedWidth: CGFloat = 650
+    static let expandedWidth: CGFloat = 528
     static let expandedTopBarHeight: CGFloat = 38
     static let sessionRowHeight: CGFloat = 50
-    static let expandedBottomInset: CGFloat = 8
+    static let expandedBottomInset: CGFloat = 21
+    static let expandedListTopInset: CGFloat = 5
     static let idleHeight: CGFloat = 132
     static let maxExpandedHeight: CGFloat = 482
 
@@ -64,7 +65,7 @@ enum IslandMetrics {
             + sessions.reduce(0) {
                 $0 + rowHeight($1, showTasks: showTasks, showSubagents: showSubagents)
             }
-            + expandedBottomInset
+            + expandedBottomInset + expandedListTopInset
         return min(contentHeight, maxHeight)
     }
 }
@@ -121,7 +122,7 @@ struct IslandView: View {
     private func panelBackground(topRadius: CGFloat, bottomRadius: CGFloat) -> some View {
         if island.isExpanded {
             TopAttachedPanelShape(topRadius: topRadius, bottomRadius: bottomRadius)
-                .fill(Color.black)
+                .fill(Color(white: 4.0 / 255.0))
         } else {
             TopAttachedPanelShape(topRadius: topRadius, bottomRadius: bottomRadius)
                 .fill(.ultraThinMaterial)
@@ -137,6 +138,9 @@ struct IslandView: View {
         VStack(spacing: 0) {
             panelTopBar
                 .frame(height: IslandMetrics.expandedTopBarHeight)
+                .overlay(alignment: .bottom) {
+                    Rectangle().fill(Color.white.opacity(0.22)).frame(height: 1)
+                }
 
             if let store = model.store, !activeSessions.isEmpty {
                 SessionDashboard(store: store, island: island)

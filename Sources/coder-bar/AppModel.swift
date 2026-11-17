@@ -215,7 +215,7 @@ final class AppModel: ObservableObject {
         alertDwellSeconds = d.object(forKey: "alertDwellSeconds") == nil
             ? 5 : d.double(forKey: "alertDwellSeconds")
         completionPresentation = d.string(forKey: "completionPresentation") ?? "glance"
-        panelWidth = d.object(forKey: "panelWidth") == nil ? 650 : d.double(forKey: "panelWidth")
+        panelWidth = d.object(forKey: "panelWidth") == nil ? 528 : d.double(forKey: "panelWidth")
         maxPanelHeight = d.object(forKey: "maxPanelHeight") == nil
             ? 482 : d.double(forKey: "maxPanelHeight")
         contentFontSize = d.object(forKey: "contentFontSize") == nil
