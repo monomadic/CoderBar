@@ -383,7 +383,7 @@ final class AppModel: ObservableObject {
                     DesktopSessionDiscovery.scan(home: home)
                 }.value
 
-                guard let self else { return }
+                guard !Task.isCancelled, let self else { return }
                 applyDesktopDiscovery(report)
 
                 do {

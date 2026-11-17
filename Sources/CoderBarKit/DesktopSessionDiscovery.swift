@@ -188,6 +188,10 @@ public enum DesktopSessionDiscovery {
         var pendingInteraction: PendingInteraction? = nil
     }
 
+    private static let codexActivityCache = FileContentCache<ActivityState>()
+    private static let claudeActivityCache = FileContentCache<ActivityState>()
+    private static let claudeRecordCache = FileContentCache<ClaudeSessionRecord>(capacity: 1024)
+
     private static let codexPlanCache = CodexPlanCache()
 
     private final class CodexPlanCache: @unchecked Sendable {
@@ -462,6 +466,12 @@ public enum DesktopSessionDiscovery {
     }
 
     private static func codexActivity(at rollout: URL) throws -> ActivityState {
+        try codexActivityCache.value(at: rollout) {
+            try parseCodexActivity(at: rollout)
+        }
+    }
+
+    private static func parseCodexActivity(at rollout: URL) throws -> ActivityState {
         let lines = try tailLines(at: rollout, maximumBytes: 512 * 1024)
         var lastTool: String?
         var sawInProgressActivity = false
@@ -590,10 +600,9 @@ public enum DesktopSessionDiscovery {
                     continue
                 }
                 do {
-                    let record = try JSONDecoder().decode(
-                        ClaudeSessionRecord.self,
-                        from: Data(contentsOf: file)
-                    )
+                    let record = try claudeRecordCache.value(at: file) {
+                        try JSONDecoder().decode(ClaudeSessionRecord.self, from: Data(contentsOf: file))
+                    }
                     guard let cliID = record.cliSessionId,
                           record.isArchived != true,
                           (record.lastActivityAt ?? 0) >= idleCutoffMS
@@ -719,6 +728,12 @@ public enum DesktopSessionDiscovery {
     }
 
     private static func claudeActivity(at transcript: URL) throws -> ActivityState {
+        try claudeActivityCache.value(at: transcript) {
+            try parseClaudeActivity(at: transcript)
+        }
+    }
+
+    private static func parseClaudeActivity(at transcript: URL) throws -> ActivityState {
         let lines = try tailLines(at: transcript, maximumBytes: 384 * 1024)
         var lastTool: String?
         var lastUserMessage: String?
