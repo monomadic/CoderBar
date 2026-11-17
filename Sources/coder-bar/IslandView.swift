@@ -6,7 +6,7 @@ enum IslandMetrics {
     static let expandedWidth: CGFloat = 528
     static let expandedTopBarHeight: CGFloat = 38
     static let sessionRowHeight: CGFloat = 50
-    static let expandedBottomInset: CGFloat = 21
+    static let expandedBottomInset: CGFloat = 0
     static let expandedListTopInset: CGFloat = 5
     static let idleHeight: CGFloat = 132
     static let maxExpandedHeight: CGFloat = 482
@@ -538,8 +538,8 @@ struct TopAttachedPanelShape: InsettableShape {
 
 enum CoderBarPalette {
     static let active = Color(red: 0.12, green: 0.95, blue: 0.34)
-    static let metadataText = Color(red: 4.0 / 255, green: 1, blue: 159.0 / 255)
-    static let metadataBackground = Color(red: 0, green: 217.0 / 255, blue: 1).opacity(0.08)
+    static let metadataText = Color(white: 223.0 / 255)
+    static let metadataBackground = Color.white.opacity(0.08)
     static let codex = Color(red: 158.0 / 255, green: 133.0 / 255, blue: 1)
 }
 

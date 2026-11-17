@@ -150,7 +150,7 @@ private struct SessionRow: View {
     }
 
     private var summary: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 5) {
             AgentActivityIndicator(
                 source: session.visualSource,
                 style: style,
@@ -162,7 +162,7 @@ private struct SessionRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
                     Text(rowTitle)
-                        .font(.system(size: contentFontSize + 0.5, weight: .semibold))
+                        .font(.system(size: contentFontSize + 0.5, weight: .regular))
                         .foregroundStyle(.white.opacity(0.95))
                         .lineLimit(1)
                         .truncationMode(.tail)
@@ -187,6 +187,10 @@ private struct SessionRow: View {
                             .padding(.horizontal, 5)
                             .padding(.vertical, 2)
                             .background(projectBackground, in: RoundedRectangle(cornerRadius: 4))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 4)
+                                    .strokeBorder(projectColor.opacity(0.49), lineWidth: 1)
+                            }
                     }
                     if showActivity {
                         activityLine
@@ -202,7 +206,7 @@ private struct SessionRow: View {
 
     private var badges: some View {
         HStack(spacing: 5) {
-            badge(style.name, foreground: style.color, background: style.color.opacity(0.14))
+            badge(style.name, foreground: style.color, background: style.color.opacity(0.14), border: style.color.opacity(0.53))
 
             if !modelBadgeText.isEmpty {
                 badge(
@@ -225,9 +229,6 @@ private struct SessionRow: View {
 
     private var activityLine: some View {
         HStack(spacing: 5) {
-            Circle()
-                .fill(activityColor)
-                .frame(width: 5, height: 5)
             Text(activityText)
                 .lineLimit(1)
                 .truncationMode(.tail)
@@ -384,7 +385,7 @@ private struct SessionRow: View {
             .joined(separator: ", ")
     }
 
-    private func badge(_ text: String, foreground: Color, background: Color) -> some View {
+    private func badge(_ text: String, foreground: Color, background: Color, border: Color = .clear) -> some View {
         Text(text)
             .font(.system(size: 8.5, weight: .medium))
             .foregroundStyle(foreground)
@@ -395,6 +396,10 @@ private struct SessionRow: View {
                 RoundedRectangle(cornerRadius: 4, style: .continuous)
                     .fill(background)
             )
+            .overlay {
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .strokeBorder(border, lineWidth: 1)
+            }
     }
 }
 
