@@ -335,7 +335,6 @@ public enum DesktopSessionDiscovery {
         FROM threads t
         WHERE t.id IN (\(idList))
           AND t.archived = 0
-          AND t.preview <> ''
           AND COALESCE(t.thread_source, 'user') = 'user'
         ORDER BY t.updated_at_ms DESC;
         """
@@ -352,7 +351,6 @@ public enum DesktopSessionDiscovery {
         let rows = try JSONDecoder().decode([CodexThreadRow].self, from: data)
 
         var warnings: [String] = []
-        let idleCutoff = Date().addingTimeInterval(-30 * 60)
         let snapshots = rows.compactMap { row -> Snapshot? in
             var activity = ActivityState(statusText: "waiting", lastTool: nil)
             if let rolloutPath = row.rolloutPath, !rolloutPath.isEmpty {
@@ -414,7 +412,6 @@ public enum DesktopSessionDiscovery {
             let lastActivityAt = childAgents
                 .map(\.lastActivityAt)
                 .reduce(ownLastActivityAt, max)
-            guard lastActivityAt >= idleCutoff else { return nil }
             let childIDs = Set(childAgents.map(\.id))
             return Snapshot(
                 id: "codex|\(row.id)",
@@ -451,18 +448,18 @@ public enum DesktopSessionDiscovery {
 
     private static func openCodexThreadIDs(lockFiles: [URL]) throws -> Set<String> {
         let arguments = ["-Fn"] + lockFiles.map(\.path)
-        do {
-            let output = try runCommand(executable: "/usr/sbin/lsof", arguments: arguments)
-            return Set(output.split(whereSeparator: \.isNewline).compactMap { line in
-                guard line.first == "n" else { return nil }
-                let file = URL(fileURLWithPath: String(line.dropFirst()))
-                guard file.pathExtension == "lock" else { return nil }
-                return file.deletingPathExtension().lastPathComponent
-            })
-        } catch let error as CommandError where error.exitCode == 1 {
-            // lsof uses exit code 1 when none of the candidate lock files is open.
-            return []
-        }
+        // lsof returns 1 when *any* requested file is not open, even if
+        // stdout contains other live locks. Always retain those matches.
+        let output = try runCommand(
+            executable: "/usr/sbin/lsof", arguments: arguments,
+            acceptedExitCodes: [0, 1]
+        )
+        return Set(output.split(whereSeparator: \.isNewline).compactMap { line in
+            guard line.first == "n" else { return nil }
+            let file = URL(fileURLWithPath: String(line.dropFirst()))
+            guard file.pathExtension == "lock" else { return nil }
+            return file.deletingPathExtension().lastPathComponent
+        })
     }
 
     private static func codexActivity(at rollout: URL) throws -> ActivityState {
@@ -604,8 +601,7 @@ public enum DesktopSessionDiscovery {
                         try JSONDecoder().decode(ClaudeSessionRecord.self, from: Data(contentsOf: file))
                     }
                     guard let cliID = record.cliSessionId,
-                          record.isArchived != true,
-                          (record.lastActivityAt ?? 0) >= idleCutoffMS
+                          record.isArchived != true
                     else { continue }
 
                     if let current = recordsByCLI[cliID],
@@ -645,7 +641,12 @@ public enum DesktopSessionDiscovery {
             }
 
             let startedAt = date(milliseconds: record.createdAt) ?? Date()
-            let lastActivityAt = date(milliseconds: record.lastActivityAt) ?? startedAt
+            let savedActivityAt = date(milliseconds: record.lastActivityAt) ?? startedAt
+            let transcriptActivityAt = transcript.flatMap {
+                try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+            }
+            let lastActivityAt = max(savedActivityAt, transcriptActivityAt ?? savedActivityAt)
+            guard lastActivityAt.timeIntervalSince1970 * 1_000 >= Double(idleCutoffMS) else { continue }
             snapshots.append(Snapshot(
                 id: "claude|\(cliID)",
                 source: "claude",
@@ -893,7 +894,7 @@ public enum DesktopSessionDiscovery {
         }
     }
 
-    private static func runCommand(executable: String, arguments: [String]) throws -> String {
+    private static func runCommand(executable: String, arguments: [String], acceptedExitCodes: Set<Int32> = [0]) throws -> String {
         guard FileManager.default.isExecutableFile(atPath: executable) else {
             throw CommandError(executable: executable, exitCode: 127, stderr: "Executable not found")
         }
@@ -911,7 +912,7 @@ public enum DesktopSessionDiscovery {
         let errorData = stderr.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
         let errorText = String(data: errorData, encoding: .utf8) ?? "stderr is not UTF-8"
-        guard process.terminationStatus == 0 else {
+        guard acceptedExitCodes.contains(process.terminationStatus) else {
             throw CommandError(
                 executable: executable,
                 exitCode: process.terminationStatus,

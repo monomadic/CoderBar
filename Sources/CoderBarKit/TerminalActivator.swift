@@ -46,8 +46,7 @@ public enum TerminalActivator {
         if session.source == "codex", allowCodexDeepLink,
            let threadID = session.codexThreadID ?? session.sessionId,
            !threadID.isEmpty {
-            let escaped = threadID.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? threadID
-            if let url = URL(string: "codex://threads/\(escaped)"),
+            if let url = SessionDeepLink.codex(threadID: threadID),
                NSWorkspace.shared.open(url) {
                 return .activated(appName: "Codex", precise: true)
             }
@@ -73,9 +72,13 @@ public enum TerminalActivator {
 
         if (session.source == "claude" || session.dataOrigin == "claude-desktop"),
            session.terminalBundleID == "com.anthropic.claudefordesktop",
-           let desktopSessionID = session.conversationID ?? session.sessionId,
+           let desktopSessionID = session.conversationID,
            let result = openClaudeCodeDesktopSession(desktopSessionID) {
             return result
+        }
+
+        if session.dataOrigin == "codex-desktop" || session.dataOrigin == "claude-desktop" {
+            return .unavailable(reason: "Could not open the matching session in its app")
         }
 
         let candidates = targets(for: session)
@@ -140,7 +143,7 @@ public enum TerminalActivator {
         }
         if session.dataOrigin == "claude-desktop"
             || session.terminalBundleID == "com.anthropic.claudefordesktop" {
-            return (session.conversationID ?? session.sessionId)?.isEmpty == false
+            return session.conversationID.flatMap { SessionDeepLink.claudeCode(sessionID: $0) } != nil
         }
         return false
     }
@@ -162,11 +165,7 @@ public enum TerminalActivator {
     }
 
     private static func openClaudeCodeDesktopSession(_ sessionID: String) -> ActivationResult? {
-        var components = URLComponents()
-        components.scheme = "claude"
-        components.host = "code"
-        components.path = "/\(sessionID)"
-        guard let url = components.url else { return nil }
+        guard let url = SessionDeepLink.claudeCode(sessionID: sessionID) else { return nil }
         guard NSWorkspace.shared.open(url) else {
             NSLog(
                 "CoderBar Claude App code deep-link failed: session=%@",
@@ -201,14 +200,11 @@ public enum TerminalActivator {
         default:
             sourceTarget = nil
         }
-        if let sourceTarget,
+        if let sourceTarget, result.isEmpty,
            !result.contains(where: { $0.bundleID == sourceTarget.bundleID }) {
             result.append(sourceTarget)
         }
 
-        for terminal in terminalTargets where !result.contains(where: { $0.bundleID == terminal.bundleID }) {
-            result.append(terminal)
-        }
         return result
     }
 
