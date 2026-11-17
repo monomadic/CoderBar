@@ -1,0 +1,142 @@
+[
+  {
+    "name": "01-pop-foil",
+    "source": "exec-40e8985b-aaaf-4268-8056-2825b16da0f1.png",
+    "crop": [
+      85,
+      50,
+      500,
+      490
+    ]
+  },
+  {
+    "name": "02-soft-candy",
+    "source": "exec-40e8985b-aaaf-4268-8056-2825b16da0f1.png",
+    "crop": [
+      650,
+      50,
+      510,
+      490
+    ]
+  },
+  {
+    "name": "03-retro-sweet",
+    "source": "exec-40e8985b-aaaf-4268-8056-2825b16da0f1.png",
+    "crop": [
+      85,
+      630,
+      500,
+      490
+    ]
+  },
+  {
+    "name": "04-jelly-glass",
+    "source": "exec-40e8985b-aaaf-4268-8056-2825b16da0f1.png",
+    "crop": [
+      650,
+      625,
+      510,
+      500
+    ]
+  },
+  {
+    "name": "05-rainbow-taffy",
+    "source": "exec-965a0a7e-ccc8-472e-827d-a7751e06c1f4.png",
+    "crop": [
+      60,
+      35,
+      530,
+      510
+    ]
+  },
+  {
+    "name": "06-space-chocolate",
+    "source": "exec-965a0a7e-ccc8-472e-827d-a7751e06c1f4.png",
+    "crop": [
+      650,
+      35,
+      540,
+      510
+    ]
+  },
+  {
+    "name": "07-citrus-pop",
+    "source": "exec-965a0a7e-ccc8-472e-827d-a7751e06c1f4.png",
+    "crop": [
+      60,
+      630,
+      530,
+      515
+    ]
+  },
+  {
+    "name": "08-candy-arcade",
+    "source": "exec-965a0a7e-ccc8-472e-827d-a7751e06c1f4.png",
+    "crop": [
+      650,
+      630,
+      540,
+      515
+    ]
+  },
+  {
+    "name": "09-classic-red",
+    "source": "exec-a5d42e30-338f-47e8-b503-ad20f77bd76d.png",
+    "crop": [
+      70,
+      30,
+      530,
+      525
+    ]
+  },
+  {
+    "name": "10-foil-break",
+    "source": "exec-a5d42e30-338f-47e8-b503-ad20f77bd76d.png",
+    "crop": [
+      655,
+      30,
+      530,
+      525
+    ]
+  },
+  {
+    "name": "11-matcha-edition",
+    "source": "exec-a5d42e30-338f-47e8-b503-ad20f77bd76d.png",
+    "crop": [
+      70,
+      635,
+      530,
+      525
+    ]
+  },
+  {
+    "name": "12-strawberry-edition",
+    "source": "exec-a5d42e30-338f-47e8-b503-ad20f77bd76d.png",
+    "crop": [
+      655,
+      635,
+      530,
+      525
+    ]
+  },
+  {
+    "name": "00-modern-notch",
+    "source": "exec-7d35fe76-2aed-4bf0-b20c-c662785de171.png"
+  },
+  {
+    "name": "00-candy-on-tile",
+    "source": "exec-d66fa1d3-9d4a-451c-98e2-1def5fa8626c.png"
+  },
+  {
+    "name": "00-square-candy",
+    "source": "exec-74600498-4706-47db-adbf-b324d2196f03.png"
+  },
+  {
+    "name": "13-space-classic-red",
+    "source": "exec-4b95ce71-2383-4e06-ae8e-966adbfbe693.png"
+  },
+  {
+    "name": "14-space-chocolate-coderbar",
+    "source": "exec-6b737059-40a0-4f11-8f3f-2c019a1cae7f.png"
+  }
+]
