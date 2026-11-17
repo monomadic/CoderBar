@@ -250,7 +250,7 @@ private struct SessionRow: View {
         if session.statusText == "thinking", let tool = session.lastTool, !tool.isEmpty {
             return tool
         }
-        if isCompleted { return "Done — click to return to \(terminalName)" }
+        if isCompleted { return "Done" }
         return statusFallback
     }
 
