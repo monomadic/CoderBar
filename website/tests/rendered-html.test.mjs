@@ -59,7 +59,8 @@ test("ships product metadata and artwork without starter assets", async () => {
   await Promise.all([
     access(new URL("../public/icon.png", import.meta.url)),
     access(new URL("../public/og.png", import.meta.url)),
-    access(new URL("../public/product/coderbar-current-expanded.png", import.meta.url)),
+    access(new URL("../public/product/coderbar-expanded-design.png", import.meta.url)),
+    access(new URL("../public/product/macos-desktop.jpg", import.meta.url)),
     access(new URL("../public/downloads/CoderBar-macos.zip", import.meta.url)),
   ]);
 });

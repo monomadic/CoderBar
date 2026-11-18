@@ -186,32 +186,22 @@ h1 {
   font-size:13px;
   margin:28px 0 48px}
 .app-figure {
-  margin:0 auto;
-  max-width:1056px}
-.shot-heading {
-  display:flex;
-  justify-content:space-between;
-  gap:12px;
-  font-size:10px;
-  letter-spacing:.08em;
-  color:var(--muted);
-  margin-bottom:14px;
-  text-align:left}
-.shot-heading i {
-  display:inline-block;
-  width:5px;
-  height:5px;
-  background:var(--green);
-  border-radius:50%;
-  margin-right:5px}
-.app-figure img {
+  position:relative;
+  width:100vw;
+  margin:0 calc(50% - 50vw);
+  aspect-ratio:746 / 502;
+  isolation:isolate}
+.app-figure .desktop-backdrop {
+  position:absolute;
+  top:4.98008%;
+  left:0;
   width:100%;
-  border-radius:0 0 32px 32px;
-  box-shadow:0 24px 60px #0003}
-.app-figure figcaption {
-  font-size:12px;
-  color:#8c8986;
-  margin-top:18px}
+  height:auto;
+  z-index:-1}
+.app-figure .expanded-design {
+  width:87.13137%;
+  height:auto;
+  margin-inline:auto}
 .supported {
   display:flex;
   align-items:center;
@@ -395,11 +385,6 @@ pre {
   padding:55px 0}
 .local {
   padding:55px 0}
-.shot-heading {
-  font-size:9px;
-  letter-spacing:0}
-.app-figure img {
-  border-radius:0 0 15px 15px}
 .supported {
   gap:16px;
   padding-bottom:35px}

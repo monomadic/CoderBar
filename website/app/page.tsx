@@ -32,10 +32,9 @@ export default function Home() {
         <div className="wing"><img src="/product/chatgpt.png" width="15" height="15" alt="ChatGPT" /><span className="bars"><i /><i /><i /></span></div><div className="notch" /><div className="count-wing"><span>5</span></div>
       </div>
       <p className="compact-caption">An icon, a little activity, and your session count.<br />Sized around your display’s notch.</p>
-      <figure className="app-figure">
-        <div className="shot-heading"><span><i /> THE CURRENT APP</span><span>Expanded · content-hugging height</span></div>
-        <img src="/product/coderbar-current-expanded.png" alt="Current CoderBar app showing four Claude sessions, colored project pills, model badges, elapsed time, and Done status" width="1056" height="488" />
-        <figcaption>Captured from the installed app. Shown with Claude sessions; Codex lives here too. Usage appears when available.</figcaption>
+      <figure className="app-figure" aria-label="CoderBar expanded view over the macOS desktop">
+        <img className="desktop-backdrop" src="/product/macos-desktop.jpg" alt="" width="746" height="477" />
+        <img className="expanded-design" src="/product/coderbar-expanded-design.png" alt="Expanded CoderBar design showing five sessions, colored project labels, elapsed time, and agent and model badges" width="650" height="315" />
       </figure>
       <div className="supported"><span>At home with</span><strong>Codex</strong><strong>Claude Code</strong><strong>Claude Desktop</strong></div>
     </section>
