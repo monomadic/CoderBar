@@ -30,3 +30,12 @@ Release and source links point to `monomadic/CoderBar`.
 The existing Sites identity is retained in `.openai/hosting.json`. Publishing
 requires editor access to that project; GitHub source pushes alone do not
 publish a Sites deployment.
+
+## GitHub Pages
+
+The public site is deployed to https://monomadic.github.io/CoderBar/ by
+`.github/workflows/pages.yml` when website changes land on `main`.
+Run `npm run build:pages` to build and validate the static output in `pages-dist/`.
+The exporter renders the same production page, removes unnecessary hydration
+scripts, and prefixes local assets for the repository path. Ordinary anchors
+and release links work without JavaScript.
