@@ -67,7 +67,7 @@ zsh Scripts/build.sh --install --open
 
 The build compiles the app plus `coder-bar-hook` and `coder-bar-ctl`, then packages `dist/CoderBar.app` and its ZIP. To package existing release binaries without recompiling, run `zsh Scripts/package.sh`. Both scripts accept `--install` (copy to `/Applications/CoderBar.app`) and `--open` (launch the installed copy with `--install`, otherwise the copy in `dist/`). Quit an existing CoderBar instance before installing; installation refuses while it is running.
 
-The bundle uses `Resources/AppIcon.icns`, the `13-space-classic-red` concept. The icon is a static bundle resource referenced by Info.plist; no icon generation or runtime override is needed.
+The bundle uses `Resources/AppIcon.icns`, the `14-space-chocolate-coderbar` concept. The icon is a static bundle resource referenced by Info.plist; no icon generation or runtime override is needed.
 
 On a command-line-tools installation whose default SDK cannot build SwiftUI, select an installed compatible SDK explicitly. For example, this checkout has been built with:
 
