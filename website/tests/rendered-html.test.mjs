@@ -29,13 +29,17 @@ test("server-renders the CoderBar product page", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>CoderBar — Native agent control for macOS<\/title>/i);
-  assert.match(html, /Stay in flow/);
+  assert.match(html, /<title>CoderBar — Your agents, a glance away<\/title>/i);
+  assert.match(html, /Your agents, a glance away/);
   assert.match(html, /Monitor/);
-  assert.match(html, /Approve/);
-  assert.match(html, /Ask/);
-  assert.match(html, /Jump/);
+  assert.match(html, /approval requests/);
+  assert.match(html, /questions/);
+  assert.match(html, /jump/i);
   assert.match(html, /Local by design/i);
+  assert.match(html, /product\/coderbar-brand\.png/);
+  assert.match(html, /project pill/);
+  assert.match(html, /1.5 seconds/);
+  assert.doesNotMatch(html, /GPT-5.6|Zero context loss/);
   assert.doesNotMatch(html, /codex-preview|loading skeleton|Starter Project/i);
 });
 
@@ -55,7 +59,7 @@ test("ships product metadata and artwork without starter assets", async () => {
   await Promise.all([
     access(new URL("../public/icon.png", import.meta.url)),
     access(new URL("../public/og.png", import.meta.url)),
-    access(new URL("../public/product/coderbar-expanded.png", import.meta.url)),
+    access(new URL("../public/product/coderbar-current-expanded.png", import.meta.url)),
     access(new URL("../public/downloads/CoderBar-macos.zip", import.meta.url)),
   ]);
 });

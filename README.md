@@ -126,7 +126,7 @@ The cache checks use `swiftc` directly and do not require XCTest or full Xcode. 
 | `Scripts/` | Build, packaging, installation, icon generation, and cache checks |
 | `Tests/CoderBarKitTests/` | Portable file-cache regression checks |
 | `docs/images/` | Screenshots and historical product artwork |
-| `website/` | Existing product website source; may differ from the current native app |
+| `website/` | Product website with current branding, app screenshot, and feature overview |
 
 Opt-in debug variables include `CODERBAR_DEBUG`, `CODERBAR_DEBUG_AUTO_EXPAND`, `CODERBAR_DEBUG_AUTO_COLLAPSE`, `CODERBAR_DEBUG_DISABLE_AUTO_COLLAPSE`, and `CODERBAR_DEBUG_DISABLE_DESKTOP_DISCOVERY`.
 

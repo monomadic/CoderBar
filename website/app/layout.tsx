@@ -1,17 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
@@ -21,9 +10,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const protocol = requestHeaders.get("x-forwarded-proto")
     ?? (host.startsWith("localhost") ? "http" : "https");
   const metadataBase = new URL(`${protocol}://${host}`);
-  const title = "CoderBar — Native agent control for macOS";
+  const title = "CoderBar — Your agents, a glance away";
   const description =
-    "Monitor Codex and Claude, approve requests, answer questions, and jump back to work from the top of your Mac.";
+    "A native macOS notch companion for Codex and Claude. Monitor sessions, keep projects in view, and jump back to work.";
 
   return {
     metadataBase,
@@ -38,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       type: "website",
-      images: [{ url: "/og.png", width: 1200, height: 630, alt: "CoderBar" }],
+      images: [{ url: "/og.png", width: 1024, height: 1024, alt: "CoderBar" }],
     },
     twitter: {
       card: "summary_large_image",
@@ -56,7 +45,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body>
         {children}
       </body>
     </html>
