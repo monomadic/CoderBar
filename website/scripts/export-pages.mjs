@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { cp, mkdir, readFile, rm, writeFile, access } from 'node:fs/promises';
+import { cp, mkdir, readFile, rm, writeFile, access, stat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import worker from '../dist/server/index.js';
 
@@ -9,6 +9,10 @@ const base = process.env.PAGES_BASE_PATH ?? '/CoderBar';
 assert.match(base, /^\/[A-Za-z0-9_-]+$/);
 const origin = process.env.PAGES_ORIGIN ?? 'https://monomadic.github.io';
 const output = new URL('../pages-dist/', import.meta.url);
+const download = JSON.parse(await readFile(new URL('../app/download.json', import.meta.url), 'utf8'));
+const archive = await stat(new URL('../public/downloads/CoderBar-macos.zip', import.meta.url));
+assert.equal(download.bytes, archive.size, 'Download size must match the packaged app');
+assert.equal(download.label, `${(archive.size / 1_000_000).toFixed(1)} MB`);
 const response = await worker.fetch(new Request(`${origin}/`, {
   headers: { accept: 'text/html', 'x-forwarded-host': new URL(origin).host, 'x-forwarded-proto': 'https' },
 }), { ASSETS: { fetch: async () => new Response('Not found', { status: 404 }) } }, {

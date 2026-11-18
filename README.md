@@ -1,5 +1,7 @@
 # CoderBar
 
+[Website](https://monomadic.github.io/CoderBar/) · [Download for macOS](https://monomadic.github.io/CoderBar/downloads/CoderBar-macos.zip)
+
 A native macOS notch companion for monitoring **Codex and Claude sessions**. Keep an eye on running work, see which project and model each session belongs to, and click a row to return to the agent app or terminal.
 
 This is [monomadic's fork](https://github.com/monomadic/CoderBar) of [helloyulife/CoderBar](https://github.com/helloyulife/CoderBar), with an English interface, a redesigned floating panel, configurable motion, and reduced background parsing work. It is built with SwiftUI and AppKit.
