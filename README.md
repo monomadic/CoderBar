@@ -133,3 +133,9 @@ The cache checks use `swiftc` directly and do not require XCTest or full Xcode. 
 Opt-in debug variables include `CODERBAR_DEBUG`, `CODERBAR_DEBUG_AUTO_EXPAND`, `CODERBAR_DEBUG_AUTO_COLLAPSE`, `CODERBAR_DEBUG_DISABLE_AUTO_COLLAPSE`, and `CODERBAR_DEBUG_DISABLE_DESKTOP_DISCOVERY`.
 
 The repository's release workflow is configured to build and verify an ARM64 app and publish a GitHub Release on pushes to `main`. See [workflow runs](https://github.com/monomadic/CoderBar/actions) for actual build status and [Releases](https://github.com/monomadic/CoderBar/releases) for available artifacts.
+
+### Website releases
+
+The [website](https://monomadic.github.io/CoderBar/) automatically refreshes after a successful **Build and release CoderBar** workflow or a published/edited GitHub Release. Pages reads the latest stable release's `CoderBar-macos.zip`, checks its byte count and SHA-256 digest when provided, and deploys the matching download link, version, size, and ZIP together. Drafts and prereleases do not replace the stable download. Failed checks leave the existing site intact.
+
+The Download buttons use a version-specific release URL, so the displayed version and size always describe that file. The existing `/CoderBar/downloads/CoderBar-macos.zip` link also remains available. Before the first release, the site uses the verified bundled v0.5.5 archive. To refresh manually, run **Publish website to GitHub Pages** from Actions; no source edits are needed for new releases.

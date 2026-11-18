@@ -17,11 +17,11 @@ export default function Home() {
 
     <section className="hero shell">
       <Brand large />
+      <h1>Coder<span className="wordmark-bar">Bar</span></h1>
       <p className="eyebrow">A little bar. A lot going on.</p>
-      <h1>CoderBar<span>Your agents, a glance away.</span></h1>
       <p className="lede">Codex and Claude, right beside your Mac’s notch. See what’s working, what’s waiting, and what’s done. Then jump straight back in.</p>
-      <div className="actions"><a className="button primary" href="/downloads/CoderBar-macos.zip" download>Download <span>↓</span></a><a className="button secondary" href="#app">Take a look <span>↓</span></a></div>
-      <p className="download-size">{download.label} · ZIP download</p>
+      <div className="actions"><a className="button primary" href={download.url} download>Download <span>↓</span></a><a className="button secondary" href="#app">Take a look <span>↓</span></a></div>
+      <p className="download-size">v{download.version} · {download.label} · ZIP download</p>
       <p className="requirements">macOS 14+ <span>·</span> Apple silicon <span>·</span> Native SwiftUI + AppKit</p>
     </section>
 
@@ -56,7 +56,7 @@ export default function Home() {
 
     <section className="local shell" id="privacy"><div className="section-label">LOCAL BY DESIGN</div><h2>Close to your work.<br />Light on repeat work.</h2><div className="local-columns"><p>CoderBar reads local session indexes and transcripts, with local hooks for timely events. No CoderBar account or hosted transcript service. Preferences and event history stay on your Mac.</p><p>Discovery polls every 1.5 seconds. Bounded caches reuse parsed files until they change, avoiding repeated reads and parsing while keeping the same polling interval.</p></div></section>
 
-    <section className="install shell" id="install"><Brand /><div className="section-label">UNWRAP YOUR NEXT WORKFLOW</div><h2>Keep your agents nearby.</h2><p>Download the current packaged app, or build from source.</p><div className="actions"><a className="button primary" href="/downloads/CoderBar-macos.zip" download>Download <span>{download.label} ↓</span></a><a className="button secondary" href={`${repo}#build-and-install`}>Build from source ↗</a></div><pre aria-label="Build from source commands"><code>git clone https://github.com/monomadic/CoderBar.git{"\n"}cd CoderBar{"\n"}zsh Scripts/build.sh{"\n"}open dist/CoderBar.app</code></pre><p className="install-note">A compatible Swift toolchain is required for source builds. The README covers installation, hooks, local data, and the pinned vendored build.</p></section>
+    <section className="install shell" id="install"><Brand /><div className="section-label">UNWRAP YOUR NEXT WORKFLOW</div><h2>Keep your agents nearby.</h2><p>Download the current packaged app, or build from source.</p><div className="actions"><a className="button primary" href={download.url} download>Download <span>{download.label} ↓</span></a><a className="button secondary" href={`${repo}#build-and-install`}>Build from source ↗</a></div><pre aria-label="Build from source commands"><code>git clone https://github.com/monomadic/CoderBar.git{"\n"}cd CoderBar{"\n"}zsh Scripts/build.sh{"\n"}open dist/CoderBar.app</code></pre><p className="install-note">A compatible Swift toolchain is required for source builds. The README covers installation, hooks, local data, and the pinned vendored build.</p></section>
 
     <footer className="footer shell"><a className="brand" href="#top"><Brand /><span>CoderBar</span></a><p>monomadic’s fork of <a href="https://github.com/helloyulife/CoderBar">helloyulife/CoderBar</a>.</p><div><a href={`${repo}#readme`}>README ↗</a><a href={repo}>Source ↗</a></div></footer>
   </main>;

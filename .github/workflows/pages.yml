@@ -4,6 +4,12 @@ on:
     branches: [main]
     paths: ['website/**', '.github/workflows/pages.yml']
   workflow_dispatch:
+  release:
+    types: [published, edited]
+  workflow_run:
+    workflows: [Build and release CoderBar]
+    types: [completed]
+    branches: [main]
 permissions:
   contents: read
   pages: write
@@ -13,12 +19,15 @@ concurrency:
   cancel-in-progress: false
 jobs:
   deploy:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -26,6 +35,11 @@ jobs:
           cache-dependency-path: website/package-lock.json
       - run: npm ci
         working-directory: website
+      - name: Sync latest published app and download metadata
+        run: node scripts/sync-release.mjs
+        working-directory: website
+        env:
+          GH_TOKEN: ${{ github.token }}
       - run: npm run build:pages
         working-directory: website
       - uses: actions/configure-pages@v5
