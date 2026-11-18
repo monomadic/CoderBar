@@ -6,11 +6,15 @@ A native macOS notch companion for monitoring **Codex and Claude sessions**. Kee
 
 This is [monomadic's fork](https://github.com/monomadic/CoderBar) of [helloyulife/CoderBar](https://github.com/helloyulife/CoderBar), with an English interface, a redesigned floating panel, configurable motion, and reduced background parsing work. It is built with SwiftUI and AppKit.
 
-## Current app
+## App preview
 
-![Current CoderBar expanded panel with outlined project and agent labels, model badges, elapsed time, and Done status](docs/images/coderbar-current-expanded.png)
+<p align="center">
+  <img src="docs/images/coderbar-desktop-showcase.png" width="746" alt="CoderBar expanded panel layered over the macOS desktop, showing project colors, agent and model badges, and elapsed time">
+</p>
 
-*Actual installed app, captured November 18, 2026. The screenshot shows four Claude sessions; the same panel also supports Codex. Usage windows appear when the agent supplies them (`—` means unavailable).*
+*Design preview using the supplied 4× artwork. The expanded panel is shown at its default 528-point width within a 746-pixel desktop composition; smaller screens scale it down. Session content is illustrative.*
+
+[Expanded view — 4× PNG](website/public/product/coderbar-expanded-design.png) · [macOS desktop — 4× JPEG](website/public/product/macos-desktop.jpg) · [View on the website](https://monomadic.github.io/CoderBar/#app)
 
 ## How you use it
 
@@ -128,7 +132,7 @@ The cache checks use `swiftc` directly and do not require XCTest or full Xcode. 
 | `Scripts/` | Build, packaging, installation, icon generation, and cache checks |
 | `Tests/CoderBarKitTests/` | Portable file-cache regression checks |
 | `docs/images/` | Screenshots and historical product artwork |
-| `website/` | Product website with current branding, app screenshot, and feature overview |
+| `website/` | Product website with current branding, layered app preview, and feature overview |
 
 Opt-in debug variables include `CODERBAR_DEBUG`, `CODERBAR_DEBUG_AUTO_EXPAND`, `CODERBAR_DEBUG_AUTO_COLLAPSE`, `CODERBAR_DEBUG_DISABLE_AUTO_COLLAPSE`, and `CODERBAR_DEBUG_DISABLE_DESKTOP_DISCOVERY`.
 

@@ -140,7 +140,6 @@ h1 {
   border-radius:0 0 12px 12px;
   overflow:hidden;
   margin:0 auto;
-  transform:scale(1.25);
   transform-origin:center}
 .wing {
   width:47px;
@@ -187,8 +186,8 @@ h1 {
   margin:28px 0 48px}
 .app-figure {
   position:relative;
-  width:100vw;
-  margin:0 calc(50% - 50vw);
+  width:min(746px, 100%);
+  margin:0 auto;
   aspect-ratio:746 / 502;
   isolation:isolate}
 .app-figure .desktop-backdrop {
