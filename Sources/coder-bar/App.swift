@@ -1,15 +1,29 @@
 import SwiftUI
 import AppKit
+import CoderBarKit
 
 @main
-struct CoderBarApp: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
-    @StateObject private var model = AppModel.shared
-
-    var body: some Scene {
-        Settings {
-            SettingsView()
-                .environmentObject(model)
+@MainActor
+enum CoderBarApp {
+    static func main() {
+        // Acquire before AppModel starts hooks, login services, or creates windows.
+        let lockURL = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/CoderBar/instance.lock")
+        do {
+            guard let instance = try ProcessInstanceLock(url: lockURL) else {
+                NSLog("CoderBar is already running; ignoring duplicate launch")
+                return
+            }
+            let application = NSApplication.shared
+            let delegate = AppDelegate()
+            application.delegate = delegate
+            application.setActivationPolicy(.accessory)
+            withExtendedLifetime((instance, delegate)) {
+                application.run()
+            }
+        } catch {
+            NSLog("Cannot acquire CoderBar instance lock: %@", String(describing: error))
+            exit(EXIT_FAILURE)
         }
     }
 }
