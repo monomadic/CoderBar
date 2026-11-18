@@ -62,13 +62,12 @@ Requires macOS 14+, an Apple silicon Mac, and a compatible Swift toolchain (the 
 ```bash
 git clone https://github.com/monomadic/CoderBar.git
 cd CoderBar
-zsh Scripts/build.sh
-zsh Scripts/package.sh
-ditto dist/CoderBar.app /Applications/CoderBar.app
-open /Applications/CoderBar.app
+zsh Scripts/build.sh --install --open
 ```
 
-The build produces the app plus `coder-bar-hook` and `coder-bar-ctl`. The package command creates a ZIP in `dist/`. Quit an existing CoderBar instance before replacing an installed copy.
+The build compiles the app plus `coder-bar-hook` and `coder-bar-ctl`, then packages `dist/CoderBar.app` and its ZIP. To package existing release binaries without recompiling, run `zsh Scripts/package.sh`. Both scripts accept `--install` (copy to `/Applications/CoderBar.app`) and `--open` (launch the installed copy with `--install`, otherwise the copy in `dist/`). Quit an existing CoderBar instance before installing; installation refuses while it is running.
+
+The bundle uses `Resources/AppIcon.icns`, the `13-space-classic-red` concept. The icon is a static bundle resource referenced by Info.plist; no icon generation or runtime override is needed.
 
 On a command-line-tools installation whose default SDK cannot build SwiftUI, select an installed compatible SDK explicitly. For example, this checkout has been built with:
 
