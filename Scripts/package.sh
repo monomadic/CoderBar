@@ -98,6 +98,11 @@ codesign --force --sign - --entitlements "$SCRIPT_DIR/Entitlements.plist" \
 codesign -dv "$DIST/CoderBar.app" 2>&1 | grep -E "Signature|Identifier|Runtime" || true
 
 codesign --verify --deep --strict "$DIST/CoderBar.app"
+# Finder custom icons preserve the wrapper silhouette on macOS Tahoe.
+# Apply after strict verification: Finder metadata is rejected by --strict,
+# but ordinary signature verification still validates the signed bundle.
+/usr/bin/osascript -l JavaScript "$SCRIPT_DIR/set-app-icon.js" "$PWD/$DIST/CoderBar.app"
+codesign --verify --deep "$DIST/CoderBar.app"
 ZIP="$DIST/CoderBar-$VERSION-macos.zip"
 rm -f "$ZIP"
 ditto -c -k --sequesterRsrc --keepParent "$DIST/CoderBar.app" "$ZIP"
@@ -107,7 +112,8 @@ LAUNCH_APP="$PWD/$DIST/CoderBar.app"
 if (( INSTALL_APP )); then
     LAUNCH_APP=/Applications/CoderBar.app
     ditto "$DIST/CoderBar.app" "$LAUNCH_APP"
-    codesign --verify --deep --strict "$LAUNCH_APP"
+    /usr/bin/osascript -l JavaScript "$SCRIPT_DIR/set-app-icon.js" "$LAUNCH_APP"
+    codesign --verify --deep "$LAUNCH_APP"
     touch "$LAUNCH_APP"
     echo "Installed: $LAUNCH_APP"
 fi
