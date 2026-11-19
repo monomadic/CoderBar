@@ -190,6 +190,26 @@ public enum DesktopSessionDiscovery {
         var pendingInteraction: PendingInteraction? = nil
     }
 
+    private static let codexTitleCache = FileContentCache<[String: String]>(capacity: 4)
+
+    /// The desktop app appends renamed titles here; threads.title can remain the first prompt.
+    private static func codexTitles(at index: URL) -> [String: String] {
+        (try? codexTitleCache.value(at: index) {
+            let data = try Data(contentsOf: index)
+            var titles: [String: String] = [:]
+            for line in data.split(separator: 10) {
+                guard let record = try? JSONSerialization.jsonObject(with: Data(line)) as? [String: Any],
+                      let id = record["id"] as? String,
+                      let name = record["thread_name"] as? String else { continue }
+                let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !title.isEmpty else { continue }
+                // Append order is authoritative, including repeated renames of the same chat.
+                titles[id] = title
+            }
+            return titles
+        }) ?? [:]
+    }
+
     private static let codexActivityCache = FileContentCache<ActivityState>()
     private static let claudeActivityCache = FileContentCache<ActivityState>()
     private static let claudeRecordCache = FileContentCache<ClaudeSessionRecord>(capacity: 1024)
@@ -352,6 +372,7 @@ public enum DesktopSessionDiscovery {
         }
         let rows = try JSONDecoder().decode([CodexThreadRow].self, from: data)
 
+        let titles = codexTitles(at: codexHome.appendingPathComponent("session_index.jsonl"))
         var warnings: [String] = []
         let snapshots = rows.compactMap { row -> Snapshot? in
             var activity = ActivityState(statusText: "waiting", lastTool: nil)
@@ -419,7 +440,7 @@ public enum DesktopSessionDiscovery {
                 id: "codex|\(row.id)",
                 source: "codex",
                 sessionID: row.id,
-                title: row.title,
+                title: titles[row.id] ?? row.title,
                 cwd: row.cwd,
                 model: row.model,
                 reasoningEffort: row.reasoningEffort,

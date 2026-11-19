@@ -49,6 +49,29 @@ struct DiscoveryRegressionTests {
         precondition(claudeSession?.conversationID == desktopID, "Must retain desktop ID independently of CLI ID")
         precondition(claudeSession?.statusText == "thinking", "Active transcript must override stale record timestamp")
 
+        func currentTitle() -> String? {
+            DesktopSessionDiscovery.scan(home: home).sessions.first { $0.sessionID == liveID }?.title
+        }
+        precondition(currentTitle() == "Fresh chat without preview", "Missing index must use database title")
+        let titleIndex = codex.appendingPathComponent("session_index.jsonl")
+        func titleRecord(_ id: String, _ name: String) throws -> Data {
+            var data = try JSONSerialization.data(withJSONObject: ["id": id, "thread_name": name])
+            data.append(10)
+            return data
+        }
+        var titles = try titleRecord(liveID, "Build and launch CoderBar")
+        titles.append(try titleRecord(closedID, "Unrelated chat"))
+        titles.append(try titleRecord(liveID, "Build and launch CoderBar (2)"))
+        titles.append(Data("malformed record\n".utf8))
+        titles.append(try titleRecord(liveID, "  "))
+        try titles.write(to: titleIndex)
+        precondition(currentTitle() == "Build and launch CoderBar (2)", "Latest valid indexed title must override initial prompt")
+        titles.append(try titleRecord(liveID, "Renamed again"))
+        try titles.write(to: titleIndex)
+        precondition(currentTitle() == "Renamed again", "Cached titles must refresh on rename")
+        try FileManager.default.removeItem(at: titleIndex)
+        precondition(currentTitle() == "Fresh chat without preview", "Removed index must not retain stale title")
+
         let rollout = codex.appendingPathComponent("activity.jsonl")
         let update = Process()
         update.executableURL = URL(fileURLWithPath: "/usr/bin/sqlite3")
