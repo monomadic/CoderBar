@@ -13,6 +13,7 @@ public final class SessionStore: ObservableObject {
         public var eventCount: Int
         public var lastEvent: String?
         public var lastTool: String?
+        var claudeToolActivity = ClaudeToolActivity()
         public var lastUserMessage: String?
         public var lastAssistantMessage: String?
         public var planItems: [DesktopSessionDiscovery.PlanItem] = []
@@ -202,6 +203,18 @@ public final class SessionStore: ObservableObject {
             if let tool = p.toolName { s.lastTool = tool }
             let cat = (p.category ?? p.hookEventName ?? "").lowercased()
             let isEnd = Self.isEnd(p)
+            if source == "claude" || source == "claude_desktop" {
+                if isEnd || Self.isWaitingEvent(cat) || cat == "userpromptsubmit" || cat == "stopfailure" {
+                    s.claudeToolActivity.reset()
+                    s.lastTool = nil
+                } else if ["posttooluse", "posttoolusefailure", "aftertool", "aftertoolfailure"].contains(cat) {
+                    s.claudeToolActivity.finish(id: p.toolUseId, name: p.toolName)
+                    s.lastTool = s.claudeToolActivity.currentTool
+                } else if ["pretooluse", "beforetool"].contains(cat), let tool = p.toolName {
+                    s.claudeToolActivity.start(id: p.toolUseId, name: tool)
+                    s.lastTool = s.claudeToolActivity.currentTool
+                }
+            }
             if !isEnd {
                 s.endedAt = nil
             }

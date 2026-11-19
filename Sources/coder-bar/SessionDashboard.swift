@@ -248,7 +248,8 @@ private struct SessionRow: View {
         if let activationError { return activationError }
         if session.pendingInteraction != nil { return statusFallback }
         if session.statusText == "thinking", let tool = session.lastTool, !tool.isEmpty {
-            return tool
+            return session.source == "claude" || session.visualSource == "claude_desktop"
+                ? ClaudeToolActivity.label(for: tool) : tool
         }
         if isCompleted { return "Done" }
         return statusFallback

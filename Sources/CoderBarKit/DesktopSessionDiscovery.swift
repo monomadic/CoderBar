@@ -736,7 +736,7 @@ public enum DesktopSessionDiscovery {
 
     private static func parseClaudeActivity(at transcript: URL) throws -> ActivityState {
         let lines = try tailLines(at: transcript, maximumBytes: 384 * 1024)
-        var lastTool: String?
+        var activeTools = ClaudeToolActivity()
         var lastUserMessage: String?
         var lastAssistantMessage: String?
         var statusText: String?
@@ -750,10 +750,11 @@ public enum DesktopSessionDiscovery {
 
             if type == "assistant", let message = object["message"] as? [String: Any] {
                 if let content = message["content"] as? [[String: Any]] {
-                    if let tool = content.last(where: { $0["type"] as? String == "tool_use" }) {
-                        lastTool = tool["name"] as? String ?? lastTool
-                    }
                     for block in content where block["type"] as? String == "tool_use" {
+                        if let name = block["name"] as? String {
+                            activeTools.start(id: block["id"] as? String, name: name)
+                            statusText = "thinking"
+                        }
                         guard let id = block["id"] as? String,
                               let name = block["name"] as? String,
                               let input = anyValueObject(block["input"]),
@@ -774,6 +775,9 @@ public enum DesktopSessionDiscovery {
                 let stopReason = message["stop_reason"] as? String
                 if stopReason == "end_turn" {
                     statusText = "waiting"
+                    activeTools.reset()
+                    pendingTools.removeAll()
+                    pendingOrder.removeAll()
                 }
                 if stopReason == "tool_use" {
                     statusText = "thinking"
@@ -787,9 +791,15 @@ public enum DesktopSessionDiscovery {
                 for block in blocks ?? [] where block["type"] as? String == "tool_result" {
                     if let toolUseID = block["tool_use_id"] as? String {
                         pendingTools.removeValue(forKey: toolUseID)
+                        activeTools.finish(id: toolUseID)
                     }
                 }
                 if let text = directText ?? blockText {
+                    if !(blocks ?? []).contains(where: { $0["type"] as? String == "tool_result" }) {
+                        activeTools.reset()
+                        pendingTools.removeAll()
+                        pendingOrder.removeAll()
+                    }
                     lastUserMessage = cleanMessage(text)
                     statusText = "thinking"
                 }
@@ -798,7 +808,7 @@ public enum DesktopSessionDiscovery {
 
         return ActivityState(
             statusText: statusText ?? "waiting",
-            lastTool: lastTool,
+            lastTool: activeTools.currentTool,
             lastUserMessage: lastUserMessage,
             lastAssistantMessage: lastAssistantMessage,
             pendingInteraction: pendingOrder.reversed().compactMap { pendingTools[$0] }.first
