@@ -139,9 +139,6 @@ struct IslandView: View {
         VStack(spacing: 0) {
             panelTopBar
                 .frame(height: island.expandedHeaderHeight)
-                .overlay(alignment: .bottom) {
-                    Rectangle().fill(Color.white.opacity(0.22)).frame(height: 1)
-                }
 
             if let store = model.store, !activeSessions.isEmpty {
                 SessionDashboard(store: store, island: island)
