@@ -7,6 +7,7 @@ import CoderBarKit
 @MainActor
 final class NotchViewModel: ObservableObject {
     @Published var compactNotchWidth: CGFloat = 0
+    @Published var expandedHeaderHeight: CGFloat = NSStatusBar.system.thickness
     @Published var compactHeight: CGFloat = 31
     @Published var compactRightWidth: CGFloat = 37
     let compactLeftWidth: CGFloat = 47

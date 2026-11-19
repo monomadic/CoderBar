@@ -56,7 +56,7 @@ struct SessionDashboard: View {
                     showTasks: model.showTasks,
                     showSubagents: model.showSubagents
                 )
-            }) > model.maxPanelHeight - IslandMetrics.expandedTopBarHeight {
+            }) > model.maxPanelHeight - island.expandedHeaderHeight {
                 Text("•••")
                     .font(.system(size: 7, weight: .bold))
                     .tracking(2)
@@ -232,6 +232,15 @@ private struct SessionRow: View {
             Text(activityText)
                 .lineLimit(1)
                 .truncationMode(.tail)
+            if session.statusText == "thinking", session.pendingInteraction == nil,
+               session.lastTool != nil, let started = session.activityStartedAt {
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    Text(ActiveToolCalls.elapsedText(since: started, now: context.date))
+                        .monospacedDigit()
+                        .foregroundStyle(.white.opacity(0.42))
+                        .fixedSize()
+                }
+            }
         }
         .font(.system(size: 10, weight: .regular))
         .foregroundStyle(activityColor)

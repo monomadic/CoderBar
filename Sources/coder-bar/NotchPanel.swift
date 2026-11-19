@@ -310,6 +310,8 @@ final class NotchPanelController: NSWindowController, ObservableObject {
     }
 
     private func updateCompactGeometry(for screen: NSScreen) {
+        let menuBarHeight = max(screen.safeAreaInsets.top, NSStatusBar.system.thickness)
+        if island.expandedHeaderHeight != menuBarHeight { island.expandedHeaderHeight = menuBarHeight }
         let notchWidth: CGFloat
         if screen.safeAreaInsets.top > 0,
            let left = screen.auxiliaryTopLeftArea,
@@ -344,6 +346,7 @@ final class NotchPanelController: NSWindowController, ObservableObject {
                 sessions: sessions,
                 showTasks: model.showTasks,
                 showSubagents: model.showSubagents,
+                headerHeight: island.expandedHeaderHeight,
                 maxHeight: model.maxPanelHeight
             )
         )

@@ -58,11 +58,12 @@ struct DiscoveryRegressionTests {
         precondition(update.terminationStatus == 0)
         var events = Data()
         func event(_ type: String, _ payload: [String: String], expected: String?) throws {
-            events.append(try JSONSerialization.data(withJSONObject: ["type":type,"payload":payload]))
+            events.append(try JSONSerialization.data(withJSONObject: ["type":type,"payload":payload,"timestamp":"2026-11-20T00:00:00.123Z"]))
             events.append(10)
             try events.write(to: rollout)
             let current = DesktopSessionDiscovery.scan(home: home).sessions.first { $0.sessionID == liveID }
             precondition(current?.lastTool == expected, "Codex tool completion mismatch")
+            precondition((current?.activityStartedAt != nil) == (expected != nil))
         }
         try event("event_msg", ["type":"task_started"], expected:nil)
         try event("response_item", ["type":"custom_tool_call","name":"exec","call_id":"a"], expected:"exec")

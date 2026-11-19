@@ -85,6 +85,7 @@ public enum DesktopSessionDiscovery {
         public let statusText: String
         public let lastEvent: String
         public let lastTool: String?
+        public var activityStartedAt: Date? = nil
         public let activeChildAgentIDs: Set<String>
         public let lastUserMessage: String?
         public let lastAssistantMessage: String?
@@ -181,6 +182,7 @@ public enum DesktopSessionDiscovery {
     private struct ActivityState {
         var statusText: String
         var lastTool: String?
+        var activityStartedAt: Date? = nil
         var lastUserMessage: String? = nil
         var lastAssistantMessage: String? = nil
         var planItems: [PlanItem] = []
@@ -433,6 +435,7 @@ public enum DesktopSessionDiscovery {
                     ? "Codex App · Working"
                     : "Codex App · Waiting for input",
                 lastTool: activity.lastTool,
+                activityStartedAt: activity.activityStartedAt,
                 activeChildAgentIDs: childIDs,
                 lastUserMessage: activity.lastUserMessage ?? cleanPrompt(row.preview),
                 lastAssistantMessage: activity.lastAssistantMessage,
@@ -489,7 +492,7 @@ public enum DesktopSessionDiscovery {
                   let kind = payload["type"] as? String else { continue }
             if object["type"] as? String == "response_item" {
                 if kind == "function_call" || kind == "custom_tool_call", let name = payload["name"] as? String {
-                    activeTools.start(id: payload["call_id"] as? String, name: name)
+                    activeTools.start(id: payload["call_id"] as? String, name: name, at: ActiveToolCalls.timestamp(object["timestamp"]))
                 } else if kind == "function_call_output" || kind == "custom_tool_call_output" {
                     activeTools.finish(id: payload["call_id"] as? String)
                 }
@@ -557,6 +560,7 @@ public enum DesktopSessionDiscovery {
         return ActivityState(
             statusText: resolvedStatus ?? (sawInProgressActivity ? "thinking" : "waiting"),
             lastTool: activeTools.currentTool,
+            activityStartedAt: activeTools.currentStartedAt,
             lastUserMessage: lastUserMessage,
             lastAssistantMessage: lastAssistantMessage,
             planItems: planItems,
@@ -679,6 +683,7 @@ public enum DesktopSessionDiscovery {
                     ? "Claude App · Working"
                     : "Claude App · Waiting for input",
                 lastTool: activity.lastTool,
+                activityStartedAt: activity.activityStartedAt,
                 activeChildAgentIDs: [],
                 lastUserMessage: activity.lastUserMessage,
                 lastAssistantMessage: activity.lastAssistantMessage,
@@ -764,7 +769,7 @@ public enum DesktopSessionDiscovery {
                 if let content = message["content"] as? [[String: Any]] {
                     for block in content where block["type"] as? String == "tool_use" {
                         if let name = block["name"] as? String {
-                            activeTools.start(id: block["id"] as? String, name: name)
+                            activeTools.start(id: block["id"] as? String, name: name, at: ActiveToolCalls.timestamp(object["timestamp"]))
                             statusText = "thinking"
                         }
                         guard let id = block["id"] as? String,
@@ -821,6 +826,7 @@ public enum DesktopSessionDiscovery {
         return ActivityState(
             statusText: statusText ?? "waiting",
             lastTool: activeTools.currentTool,
+            activityStartedAt: activeTools.currentStartedAt,
             lastUserMessage: lastUserMessage,
             lastAssistantMessage: lastAssistantMessage,
             pendingInteraction: pendingOrder.reversed().compactMap { pendingTools[$0] }.first

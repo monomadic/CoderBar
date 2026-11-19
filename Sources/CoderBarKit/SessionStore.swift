@@ -13,7 +13,8 @@ public final class SessionStore: ObservableObject {
         public var eventCount: Int
         public var lastEvent: String?
         public var lastTool: String?
-        var claudeToolActivity = ActiveToolCalls()
+        public var activityStartedAt: Date? = nil
+        var activeToolCalls = ActiveToolCalls()
         public var lastUserMessage: String?
         public var lastAssistantMessage: String?
         public var planItems: [DesktopSessionDiscovery.PlanItem] = []
@@ -203,17 +204,18 @@ public final class SessionStore: ObservableObject {
             if let tool = p.toolName { s.lastTool = tool }
             let cat = (p.category ?? p.hookEventName ?? "").lowercased()
             let isEnd = Self.isEnd(p)
-            if source == "claude" || source == "claude_desktop" {
+            if source == "claude" || source == "claude_desktop" || source == "codex" {
                 if isEnd || Self.isWaitingEvent(cat) || cat == "userpromptsubmit" || cat == "stopfailure" {
-                    s.claudeToolActivity.reset()
+                    s.activeToolCalls.reset()
                     s.lastTool = nil
                 } else if ["posttooluse", "posttoolusefailure", "aftertool", "aftertoolfailure"].contains(cat) {
-                    s.claudeToolActivity.finish(id: p.toolUseId, name: p.toolName)
-                    s.lastTool = s.claudeToolActivity.currentTool
+                    s.activeToolCalls.finish(id: p.toolUseId, name: p.toolName)
+                    s.lastTool = s.activeToolCalls.currentTool
                 } else if ["pretooluse", "beforetool"].contains(cat), let tool = p.toolName {
-                    s.claudeToolActivity.start(id: p.toolUseId, name: tool)
-                    s.lastTool = s.claudeToolActivity.currentTool
+                    s.activeToolCalls.start(id: p.toolUseId, name: tool, at: at)
+                    s.lastTool = s.activeToolCalls.currentTool
                 }
+                s.activityStartedAt = s.activeToolCalls.currentStartedAt
             }
             if !isEnd {
                 s.endedAt = nil
@@ -359,6 +361,7 @@ public final class SessionStore: ObservableObject {
                     session.pendingApproval = false
                     session.lastEvent = snapshot.lastEvent
                     session.lastTool = snapshot.lastTool
+                    session.activityStartedAt = snapshot.activityStartedAt
                 }
                 if session != previous {
                     sessions[index] = session
@@ -375,6 +378,7 @@ public final class SessionStore: ObservableObject {
                     eventCount: 1,
                     lastEvent: snapshot.lastEvent,
                     lastTool: snapshot.lastTool,
+                    activityStartedAt: snapshot.activityStartedAt,
                     lastUserMessage: snapshot.lastUserMessage,
                     lastAssistantMessage: snapshot.lastAssistantMessage,
                     planItems: snapshot.planItems,

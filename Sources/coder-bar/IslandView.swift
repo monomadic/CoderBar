@@ -4,7 +4,7 @@ import CoderBarKit
 
 enum IslandMetrics {
     static let expandedWidth: CGFloat = 528
-    static let expandedTopBarHeight: CGFloat = 38
+    static let expandedTopBarHeight: CGFloat = 24
     static let sessionRowHeight: CGFloat = 50
     static let expandedBottomInset: CGFloat = 0
     static let expandedListTopInset: CGFloat = 5
@@ -58,10 +58,11 @@ enum IslandMetrics {
         sessions: [SessionStore.Session],
         showTasks: Bool = true,
         showSubagents: Bool = true,
+        headerHeight: CGFloat = expandedTopBarHeight,
         maxHeight: CGFloat = maxExpandedHeight
     ) -> CGFloat {
-        guard !sessions.isEmpty else { return idleHeight }
-        let contentHeight = expandedTopBarHeight
+        guard !sessions.isEmpty else { return idleHeight + headerHeight - expandedTopBarHeight }
+        let contentHeight = headerHeight
             + sessions.reduce(0) {
                 $0 + rowHeight($1, showTasks: showTasks, showSubagents: showSubagents)
             }
@@ -137,7 +138,7 @@ struct IslandView: View {
     private var expandedPanel: some View {
         VStack(spacing: 0) {
             panelTopBar
-                .frame(height: IslandMetrics.expandedTopBarHeight)
+                .frame(height: island.expandedHeaderHeight)
                 .overlay(alignment: .bottom) {
                     Rectangle().fill(Color.white.opacity(0.22)).frame(height: 1)
                 }

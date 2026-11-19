@@ -3,6 +3,20 @@ import Foundation
 @main
 struct ClaudeActivityTests {
     @MainActor static func main() throws {
+        var timer = ActiveToolCalls()
+        let start = Date(timeIntervalSince1970: 100)
+        timer.start(id: "a", name: "Read", at: start)
+        timer.start(id: "a", name: "Read", at: start.addingTimeInterval(9))
+        precondition(timer.currentStartedAt == start, "Polling/repeated events must not reset time")
+        timer.start(id: "b", name: "Read", at: start.addingTimeInterval(10))
+        precondition(timer.currentStartedAt == start.addingTimeInterval(10), "New call resets even for the same tool")
+        timer.finish(id: "b")
+        precondition(timer.currentStartedAt == start)
+        timer.finish(id: "a")
+        precondition(timer.currentStartedAt == nil)
+        precondition(ActiveToolCalls.elapsedText(since: start, now: start.addingTimeInterval(32)) == "32s")
+        precondition(ActiveToolCalls.elapsedText(since: start, now: start.addingTimeInterval(92)) == "1m 32s")
+        precondition(ActiveToolCalls.timestamp("2026-11-20T00:00:00.123Z") != nil)
         let home = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: home) }
         let records = home.appendingPathComponent("Library/Application Support/Claude/claude-code-sessions")
@@ -16,7 +30,8 @@ struct ClaudeActivityTests {
         let transcript = project.appendingPathComponent(id+".jsonl")
         var log = Data()
         func append(_ row: [String: Any]) throws {
-            log.append(try JSONSerialization.data(withJSONObject:row)); log.append(10)
+            var timestamped = row; timestamped["timestamp"] = "2026-11-20T00:00:00.123Z"
+            log.append(try JSONSerialization.data(withJSONObject:timestamped)); log.append(10)
             try log.write(to:transcript)
         }
         func tool(_ id: String, _ name: String) throws {
@@ -30,6 +45,7 @@ struct ClaudeActivityTests {
             precondition(session != nil)
             precondition(session?.lastTool == tool,"Expected \(String(describing:tool)), got \(String(describing:session?.lastTool))")
             precondition(session?.statusText == status)
+            precondition((session?.activityStartedAt != nil) == (tool != nil))
         }
         try tool("a","Read"); check("Read")
         try tool("b","Bash"); check("Bash")
