@@ -41,8 +41,8 @@ struct ClaudeActivityTests {
         check(nil,status:"waiting")
         try tool("d","Edit")
         try append(["type":"user","message":["content":"new turn"]]); check(nil)
-        for (name,label) in [("Read","Reading"),("Bash","Executing a command"),("Write","Writing"),("Edit","Editing"),("CustomTool","CustomTool")] {
-            precondition(ClaudeToolActivity.label(for:name)==label)
+        for (name,label) in [("Read","Reading files…"),("Bash","Executing a command…"),("Write","Writing files…"),("Edit","Editing files…"),("CustomTool","CustomTool")] {
+            precondition(ToolActivityLabel.label(for:name)==label)
         }
         let store = try SessionStore(dataDir:home.appendingPathComponent("store"),replayOnStart:false)
         func hook(_ event: String, _ id: String? = nil, _ name: String? = nil) {

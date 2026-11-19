@@ -248,8 +248,7 @@ private struct SessionRow: View {
         if let activationError { return activationError }
         if session.pendingInteraction != nil { return statusFallback }
         if session.statusText == "thinking", let tool = session.lastTool, !tool.isEmpty {
-            return session.source == "claude" || session.visualSource == "claude_desktop"
-                ? ClaudeToolActivity.label(for: tool) : tool
+            return ToolActivityLabel.label(for: tool)
         }
         if isCompleted { return "Done" }
         return statusFallback
@@ -984,7 +983,7 @@ private struct ChildAgentsCard: View {
                                 Text(agentModel(item))
                             }
                             if let tool = item.lastTool, !tool.isEmpty {
-                                Text("⎿ \(tool)")
+                                Text("⎿ \(ToolActivityLabel.label(for: tool))")
                                     .foregroundStyle(.white.opacity(0.42))
                             }
                         }

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Tracks unfinished calls rather than retaining the last tool indefinitely.
-public struct ClaudeToolActivity: Equatable {
+public struct ActiveToolCalls: Equatable {
     private struct Call: Equatable { let id: String; let name: String }
     private var calls: [Call] = []
     public var currentTool: String? { calls.last?.name }
@@ -20,13 +20,4 @@ public struct ClaudeToolActivity: Equatable {
     }
     public mutating func reset() { calls.removeAll() }
 
-    public static func label(for tool: String) -> String {
-        switch tool.lowercased() {
-        case "read": return "Reading"
-        case "bash": return "Executing a command"
-        case "write": return "Writing"
-        case "edit", "multiedit", "notebookedit": return "Editing"
-        default: return tool
-        }
-    }
 }

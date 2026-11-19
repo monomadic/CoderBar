@@ -13,7 +13,7 @@ public final class SessionStore: ObservableObject {
         public var eventCount: Int
         public var lastEvent: String?
         public var lastTool: String?
-        var claudeToolActivity = ClaudeToolActivity()
+        var claudeToolActivity = ActiveToolCalls()
         public var lastUserMessage: String?
         public var lastAssistantMessage: String?
         public var planItems: [DesktopSessionDiscovery.PlanItem] = []

@@ -470,7 +470,7 @@ public enum DesktopSessionDiscovery {
 
     private static func parseCodexActivity(at rollout: URL) throws -> ActivityState {
         let lines = try tailLines(at: rollout, maximumBytes: 512 * 1024)
-        var lastTool: String?
+        var activeTools = ActiveToolCalls()
         var sawInProgressActivity = false
         var resolvedStatus: String?
         let cachedContent = try codexPlanCache.content(at: rollout, parser: parseCodexPlan)
@@ -481,18 +481,30 @@ public enum DesktopSessionDiscovery {
         var pendingInteraction: PendingInteraction?
         var completedCallIDs = Set<String>()
 
+        // Track outstanding calls chronologically; completed calls must not
+        // survive into the next tool, turn, or idle state.
+        for line in lines {
+            guard let object = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
+                  let payload = object["payload"] as? [String: Any],
+                  let kind = payload["type"] as? String else { continue }
+            if object["type"] as? String == "response_item" {
+                if kind == "function_call" || kind == "custom_tool_call", let name = payload["name"] as? String {
+                    activeTools.start(id: payload["call_id"] as? String, name: name)
+                } else if kind == "function_call_output" || kind == "custom_tool_call_output" {
+                    activeTools.finish(id: payload["call_id"] as? String)
+                }
+            } else if object["type"] as? String == "event_msg",
+                      ["task_started", "task_complete", "turn_aborted", "user_message"].contains(kind) {
+                activeTools.reset()
+            }
+        }
+
         for line in lines.reversed() {
             guard let object = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
                   let type = object["type"] as? String,
                   let payload = object["payload"] as? [String: Any]
             else { continue }
 
-            if type == "response_item",
-               payload["type"] as? String == "custom_tool_call" {
-                if lastTool == nil {
-                    lastTool = payload["name"] as? String
-                }
-            }
             if type == "response_item",
                payload["type"] as? String == "function_call_output",
                let callID = payload["call_id"] as? String {
@@ -544,7 +556,7 @@ public enum DesktopSessionDiscovery {
 
         return ActivityState(
             statusText: resolvedStatus ?? (sawInProgressActivity ? "thinking" : "waiting"),
-            lastTool: lastTool,
+            lastTool: activeTools.currentTool,
             lastUserMessage: lastUserMessage,
             lastAssistantMessage: lastAssistantMessage,
             planItems: planItems,
@@ -736,7 +748,7 @@ public enum DesktopSessionDiscovery {
 
     private static func parseClaudeActivity(at transcript: URL) throws -> ActivityState {
         let lines = try tailLines(at: transcript, maximumBytes: 384 * 1024)
-        var activeTools = ClaudeToolActivity()
+        var activeTools = ActiveToolCalls()
         var lastUserMessage: String?
         var lastAssistantMessage: String?
         var statusText: String?

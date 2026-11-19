@@ -49,6 +49,32 @@ struct DiscoveryRegressionTests {
         precondition(claudeSession?.conversationID == desktopID, "Must retain desktop ID independently of CLI ID")
         precondition(claudeSession?.statusText == "thinking", "Active transcript must override stale record timestamp")
 
+        let rollout = codex.appendingPathComponent("activity.jsonl")
+        let update = Process()
+        update.executableURL = URL(fileURLWithPath: "/usr/bin/sqlite3")
+        update.arguments = [codex.appendingPathComponent("state_5.sqlite").path,
+                            "UPDATE threads SET rollout_path='\(rollout.path)' WHERE id='\(liveID)';"]
+        try update.run(); update.waitUntilExit()
+        precondition(update.terminationStatus == 0)
+        var events = Data()
+        func event(_ type: String, _ payload: [String: String], expected: String?) throws {
+            events.append(try JSONSerialization.data(withJSONObject: ["type":type,"payload":payload]))
+            events.append(10)
+            try events.write(to: rollout)
+            let current = DesktopSessionDiscovery.scan(home: home).sessions.first { $0.sessionID == liveID }
+            precondition(current?.lastTool == expected, "Codex tool completion mismatch")
+        }
+        try event("event_msg", ["type":"task_started"], expected:nil)
+        try event("response_item", ["type":"custom_tool_call","name":"exec","call_id":"a"], expected:"exec")
+        try event("response_item", ["type":"function_call","name":"apply_patch","call_id":"b"], expected:"apply_patch")
+        try event("response_item", ["type":"function_call_output","call_id":"b"], expected:"exec")
+        try event("response_item", ["type":"custom_tool_call_output","call_id":"a"], expected:nil)
+        try event("response_item", ["type":"function_call","name":"read_file","call_id":"c"], expected:"read_file")
+        try event("event_msg", ["type":"task_complete"], expected:nil)
+        for (tool, label) in [("exec","Running tools…"),("functions.exec_command","Executing a command…"),("apply_patch","Editing files…"),("read_file","Reading files…"),("write_file","Writing files…"),("CustomTool","CustomTool")] {
+            precondition(ToolActivityLabel.label(for: tool) == label)
+        }
+
         let url = SessionDeepLink.claudeCode(sessionID: desktopID)!
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
         precondition(components.path == "/continue")
