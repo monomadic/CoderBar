@@ -220,6 +220,7 @@ public enum DesktopSessionDiscovery {
 
     private final class CodexPlanCache: @unchecked Sendable {
         private struct Entry {
+            var turnStartedAt: Date? = nil
             var offset: UInt64
             var plan: [PlanItem]
             var lastUserMessage: String?
@@ -232,7 +233,7 @@ public enum DesktopSessionDiscovery {
         func content(
             at file: URL,
             parser: (String) -> [PlanItem]
-        ) throws -> (plan: [PlanItem], lastUserMessage: String?, lastAssistantMessage: String?) {
+        ) throws -> (plan: [PlanItem], lastUserMessage: String?, lastAssistantMessage: String?, turnStartedAt: Date?) {
             lock.lock()
             defer { lock.unlock() }
 
@@ -253,7 +254,7 @@ public enum DesktopSessionDiscovery {
                 )
             }
             guard size > entry.offset else {
-                return (entry.plan, entry.lastUserMessage, entry.lastAssistantMessage)
+                return (entry.plan, entry.lastUserMessage, entry.lastAssistantMessage, entry.turnStartedAt)
             }
 
             let handle = try FileHandle(forReadingFrom: file)
@@ -261,12 +262,23 @@ public enum DesktopSessionDiscovery {
             try handle.seek(toOffset: entry.offset)
             let data = try handle.readToEnd() ?? Data()
 
-            for bytes in [UInt8](data).split(separator: 0x0A) {
+            let complete = data.lastIndex(of: 10).map { data.prefix(through: $0) } ?? Data()
+            for bytes in [UInt8](complete).split(separator: 0x0A) {
                 let line = Data(bytes)
                 guard let object = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
                       let type = object["type"] as? String,
                       let payload = object["payload"] as? [String: Any]
                 else { continue }
+
+                if type == "event_msg", let event = payload["type"] as? String {
+                    if event == "task_started" {
+                        entry.turnStartedAt = ActiveToolCalls.timestamp(object["timestamp"])
+                    } else if event == "user_message", entry.turnStartedAt == nil {
+                        entry.turnStartedAt = ActiveToolCalls.timestamp(object["timestamp"])
+                    } else if event == "task_complete" || event == "turn_aborted" {
+                        entry.turnStartedAt = nil
+                    }
+                }
 
                 if type == "event_msg",
                    let event = payload["type"] as? String,
@@ -287,9 +299,9 @@ public enum DesktopSessionDiscovery {
                 }
             }
 
-            entry.offset = size
+            entry.offset += UInt64(complete.count)
             entries[file.path] = entry
-            return (entry.plan, entry.lastUserMessage, entry.lastAssistantMessage)
+            return (entry.plan, entry.lastUserMessage, entry.lastAssistantMessage, entry.turnStartedAt)
         }
     }
 
@@ -516,7 +528,7 @@ public enum DesktopSessionDiscovery {
                   let kind = payload["type"] as? String else { continue }
             if object["type"] as? String == "response_item" {
                 if kind == "function_call" || kind == "custom_tool_call", let name = payload["name"] as? String {
-                    activeTools.start(id: payload["call_id"] as? String, name: name, at: ActiveToolCalls.timestamp(object["timestamp"]))
+                    activeTools.start(id: payload["call_id"] as? String, name: name, at: ActiveToolCalls.timestamp(object["timestamp"]), detail: ToolActivityLabel.codexDetail(for: name, arguments: (payload["arguments"] ?? payload["input"]) as? String))
                 } else if kind == "function_call_output" || kind == "custom_tool_call_output" {
                     activeTools.finish(id: payload["call_id"] as? String)
                 }
@@ -573,7 +585,7 @@ public enum DesktopSessionDiscovery {
                !message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 lastUserMessage = cleanMessage(message)
             }
-            if resolvedStatus == nil, event == "task_complete" {
+            if resolvedStatus == nil, event == "task_complete" || event == "turn_aborted" {
                 resolvedStatus = "waiting"
             } else if resolvedStatus == nil,
                       event == "task_started" || event == "user_message" {
@@ -584,7 +596,8 @@ public enum DesktopSessionDiscovery {
         return ActivityState(
             statusText: resolvedStatus ?? (sawInProgressActivity ? "thinking" : "waiting"),
             lastTool: activeTools.currentTool,
-            activityStartedAt: activeTools.currentStartedAt,
+            activityStartedAt: cachedContent.turnStartedAt,
+            activityDetail: activeTools.currentDetail,
             lastUserMessage: lastUserMessage,
             lastAssistantMessage: lastAssistantMessage,
             planItems: planItems,

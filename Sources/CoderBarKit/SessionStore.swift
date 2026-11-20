@@ -206,7 +206,7 @@ public final class SessionStore: ObservableObject {
             let cat = (p.category ?? p.hookEventName ?? "").lowercased()
             let isEnd = Self.isEnd(p)
             if source == "claude" || source == "claude_desktop" || source == "codex" {
-                if isEnd || Self.isWaitingEvent(cat) || cat == "userpromptsubmit" || cat == "stopfailure" {
+                if isEnd || Self.isWaitingEvent(cat) || cat == "userpromptsubmit" || cat == "beforeagent" || cat == "stopfailure" {
                     s.activeToolCalls.reset()
                     s.lastTool = nil
                 } else if ["posttooluse", "posttoolusefailure", "aftertool", "aftertoolfailure"].contains(cat) {
@@ -217,12 +217,8 @@ public final class SessionStore: ObservableObject {
                     s.lastTool = s.activeToolCalls.currentTool
                 }
                 s.activityDetail = s.activeToolCalls.currentDetail
-                if source == "claude" || source == "claude_desktop" {
-                    if cat == "userpromptsubmit" { s.activityStartedAt = at }
-                    else if isEnd || Self.isWaitingEvent(cat) || cat == "stopfailure" { s.activityStartedAt = nil }
-                } else {
-                    s.activityStartedAt = s.activeToolCalls.currentStartedAt
-                }
+                if cat == "userpromptsubmit" || cat == "beforeagent" { s.activityStartedAt = at }
+                else if isEnd || Self.isWaitingEvent(cat) || cat == "stopfailure" { s.activityStartedAt = nil }
             }
             if !isEnd {
                 s.endedAt = nil

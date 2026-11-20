@@ -101,6 +101,22 @@ struct ClaudeActivityTests {
         hook("PostToolUseFailure","a","Read");precondition(store.sessions.first?.lastTool == nil)
         precondition(store.sessions.first?.activityStartedAt == hookStart)
         hook("PreToolUse","c","Write");hook("Stop");precondition(store.sessions.first?.lastTool == nil)
+        var codexHook = HookPayload()
+        codexHook.source = "codex"; codexHook.sessionId = "codex-hook"
+        codexHook.hookEventName = "BeforeAgent"
+        store.ingest(codexHook)
+        let codexStart = store.sessions.first { $0.sessionId == "codex-hook" }?.activityStartedAt
+        precondition(codexStart != nil)
+        codexHook.hookEventName = "BeforeTool"; codexHook.toolName = "js"; codexHook.toolUseId = "ui"
+        codexHook.toolInput = ["title": .string("Checking the updated UI")]
+        store.ingest(codexHook)
+        let codexSession = store.sessions.first { $0.sessionId == "codex-hook" }
+        precondition(codexSession?.activityDetail == "Checking the updated UI")
+        precondition(codexSession?.activityStartedAt == codexStart)
+        codexHook.hookEventName = "AfterTool"; store.ingest(codexHook)
+        precondition(store.sessions.first { $0.sessionId == "codex-hook" }?.activityStartedAt == codexStart)
+        codexHook.hookEventName = "AfterAgent"; store.ingest(codexHook)
+        precondition(store.sessions.first { $0.sessionId == "codex-hook" }?.activityStartedAt == nil)
         print("PASS: Claude transcript and hook completion, parallel calls, failed results, turn reset, and labels")
     }
 }

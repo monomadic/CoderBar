@@ -80,13 +80,13 @@ struct DiscoveryRegressionTests {
         try update.run(); update.waitUntilExit()
         precondition(update.terminationStatus == 0)
         var events = Data()
-        func event(_ type: String, _ payload: [String: String], expected: String?) throws {
-            events.append(try JSONSerialization.data(withJSONObject: ["type":type,"payload":payload,"timestamp":"2026-11-20T00:00:00.123Z"]))
+        func event(_ type: String, _ payload: [String: String], expected: String?, timestamp: String = "2026-11-20T00:00:00.123Z") throws {
+            events.append(try JSONSerialization.data(withJSONObject: ["type":type,"payload":payload,"timestamp":timestamp]))
             events.append(10)
             try events.write(to: rollout)
             let current = DesktopSessionDiscovery.scan(home: home).sessions.first { $0.sessionID == liveID }
             precondition(current?.lastTool == expected, "Codex tool completion mismatch")
-            precondition((current?.activityStartedAt != nil) == (expected != nil))
+            precondition((current?.activityStartedAt != nil) == (current?.statusText == "thinking"))
         }
         try event("event_msg", ["type":"task_started"], expected:nil)
         try event("response_item", ["type":"custom_tool_call","name":"exec","call_id":"a"], expected:"exec")
@@ -95,6 +95,43 @@ struct DiscoveryRegressionTests {
         try event("response_item", ["type":"custom_tool_call_output","call_id":"a"], expected:nil)
         try event("response_item", ["type":"function_call","name":"read_file","call_id":"c"], expected:"read_file")
         try event("event_msg", ["type":"task_complete"], expected:nil)
+        let promptTime = "2026-11-20T01:00:00.123Z"
+        try event("event_msg", ["type":"task_started"], expected:nil, timestamp:promptTime)
+        try event("event_msg", ["type":"user_message","message":"Check the UI"], expected:nil, timestamp:"2026-11-20T01:00:01.123Z")
+        try event("response_item", ["type":"function_call","name":"js","call_id":"ui","arguments":#"{"title":"Checking model labels","code":"await app.getAXState()"}"#], expected:"js")
+        func current() -> DesktopSessionDiscovery.Snapshot {
+            DesktopSessionDiscovery.scan(home:home).sessions.first { $0.sessionID == liveID }!
+        }
+        precondition(current().activityDetail == "Checking model labels")
+        precondition(current().activityStartedAt == ActiveToolCalls.timestamp(promptTime))
+        try event("response_item", ["type":"function_call_output","call_id":"ui"], expected:nil)
+        precondition(current().activityDetail == nil)
+        precondition(current().activityStartedAt == ActiveToolCalls.timestamp(promptTime))
+        // Force the turn start outside the activity tail, including on a cold cache read.
+        events.append(Data((String(repeating:" ",count:600_000) + "\n").utf8))
+        try event("response_item", ["type":"custom_tool_call","name":"exec","call_id":"build","input":#"await tools.exec_command({cmd:"swift build",justification:"Build the updated app"})"#], expected:"exec")
+        precondition(current().activityDetail == "Build the updated app")
+        precondition(current().activityStartedAt == ActiveToolCalls.timestamp(promptTime))
+        let coldRollout = codex.appendingPathComponent("cold-activity.jsonl")
+        try events.write(to:coldRollout)
+        func selectRollout(_ path: URL) throws {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath:"/usr/bin/sqlite3")
+            process.arguments = [codex.appendingPathComponent("state_5.sqlite").path,
+                                 "UPDATE threads SET rollout_path='\(path.path)' WHERE id='\(liveID)';"]
+            try process.run(); process.waitUntilExit()
+            precondition(process.terminationStatus == 0)
+        }
+        try selectRollout(coldRollout)
+        precondition(current().activityStartedAt == ActiveToolCalls.timestamp(promptTime), "Cold scan must recover a turn outside the tail")
+        try selectRollout(rollout)
+        try event("event_msg", ["type":"turn_aborted"], expected:nil)
+        precondition(current().activityStartedAt == nil)
+        precondition(current().statusText == "waiting")
+        precondition(ToolActivityLabel.codexDetail(for:"exec",arguments:#"await tools.exec_command({cmd:"git status\nignored second line"})"#) == "git status")
+        precondition(ToolActivityLabel.codexDetail(for:"js",arguments:"malformed") == nil)
+        precondition(ToolActivityLabel.label(for:"js") == "Running JavaScript…")
+
         for (tool, label) in [("exec","Running tools…"),("functions.exec_command","Executing a command…"),("apply_patch","Editing files…"),("read_file","Reading files…"),("write_file","Writing files…"),("CustomTool","CustomTool")] {
             precondition(ToolActivityLabel.label(for: tool) == label)
         }
