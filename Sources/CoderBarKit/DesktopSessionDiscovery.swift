@@ -86,6 +86,7 @@ public enum DesktopSessionDiscovery {
         public let lastEvent: String
         public let lastTool: String?
         public var activityStartedAt: Date? = nil
+        public var activityDetail: String? = nil
         public let activeChildAgentIDs: Set<String>
         public let lastUserMessage: String?
         public let lastAssistantMessage: String?
@@ -183,6 +184,7 @@ public enum DesktopSessionDiscovery {
         var statusText: String
         var lastTool: String?
         var activityStartedAt: Date? = nil
+        var activityDetail: String? = nil
         var lastUserMessage: String? = nil
         var lastAssistantMessage: String? = nil
         var planItems: [PlanItem] = []
@@ -457,6 +459,7 @@ public enum DesktopSessionDiscovery {
                     : "Codex App · Waiting for input",
                 lastTool: activity.lastTool,
                 activityStartedAt: activity.activityStartedAt,
+                activityDetail: activity.activityDetail,
                 activeChildAgentIDs: childIDs,
                 lastUserMessage: activity.lastUserMessage ?? cleanPrompt(row.preview),
                 lastAssistantMessage: activity.lastAssistantMessage,
@@ -603,6 +606,7 @@ public enum DesktopSessionDiscovery {
         let lastActivityAt: Int64?
         let isArchived: Bool?
         let completedTurns: Int?
+        let latestUserFrameAt: Int64?
     }
 
     private static func discoverClaude(home: URL) throws -> DiscoveryPart {
@@ -677,6 +681,12 @@ public enum DesktopSessionDiscovery {
                 }
             }
 
+            if activity.statusText == "thinking" {
+                // This survives transcript tail truncation during long-running turns.
+                activity.activityStartedAt = date(milliseconds: record.latestUserFrameAt)
+                    ?? activity.activityStartedAt
+            }
+
             let startedAt = date(milliseconds: record.createdAt) ?? Date()
             let savedActivityAt = date(milliseconds: record.lastActivityAt) ?? startedAt
             let transcriptActivityAt = transcript.flatMap {
@@ -705,6 +715,7 @@ public enum DesktopSessionDiscovery {
                     : "Claude App · Waiting for input",
                 lastTool: activity.lastTool,
                 activityStartedAt: activity.activityStartedAt,
+                activityDetail: activity.activityDetail,
                 activeChildAgentIDs: [],
                 lastUserMessage: activity.lastUserMessage,
                 lastAssistantMessage: activity.lastAssistantMessage,
@@ -775,6 +786,7 @@ public enum DesktopSessionDiscovery {
     private static func parseClaudeActivity(at transcript: URL) throws -> ActivityState {
         let lines = try tailLines(at: transcript, maximumBytes: 384 * 1024)
         var activeTools = ActiveToolCalls()
+        var turnStartedAt: Date?
         var lastUserMessage: String?
         var lastAssistantMessage: String?
         var statusText: String?
@@ -790,7 +802,7 @@ public enum DesktopSessionDiscovery {
                 if let content = message["content"] as? [[String: Any]] {
                     for block in content where block["type"] as? String == "tool_use" {
                         if let name = block["name"] as? String {
-                            activeTools.start(id: block["id"] as? String, name: name, at: ActiveToolCalls.timestamp(object["timestamp"]))
+                            activeTools.start(id: block["id"] as? String, name: name, at: ActiveToolCalls.timestamp(object["timestamp"]), detail: ToolActivityLabel.detail(for: name, input: anyValueObject(block["input"])))
                             statusText = "thinking"
                         }
                         guard let id = block["id"] as? String,
@@ -813,6 +825,7 @@ public enum DesktopSessionDiscovery {
                 let stopReason = message["stop_reason"] as? String
                 if stopReason == "end_turn" {
                     statusText = "waiting"
+                    turnStartedAt = nil
                     activeTools.reset()
                     pendingTools.removeAll()
                     pendingOrder.removeAll()
@@ -833,7 +846,9 @@ public enum DesktopSessionDiscovery {
                     }
                 }
                 if let text = directText ?? blockText {
-                    if !(blocks ?? []).contains(where: { $0["type"] as? String == "tool_result" }) {
+                    if object["isMeta"] as? Bool != true,
+                       !(blocks ?? []).contains(where: { $0["type"] as? String == "tool_result" }) {
+                        turnStartedAt = ActiveToolCalls.timestamp(object["timestamp"])
                         activeTools.reset()
                         pendingTools.removeAll()
                         pendingOrder.removeAll()
@@ -847,7 +862,8 @@ public enum DesktopSessionDiscovery {
         return ActivityState(
             statusText: statusText ?? "waiting",
             lastTool: activeTools.currentTool,
-            activityStartedAt: activeTools.currentStartedAt,
+            activityStartedAt: turnStartedAt,
+            activityDetail: activeTools.currentDetail,
             lastUserMessage: lastUserMessage,
             lastAssistantMessage: lastAssistantMessage,
             pendingInteraction: pendingOrder.reversed().compactMap { pendingTools[$0] }.first

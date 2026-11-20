@@ -233,7 +233,7 @@ private struct SessionRow: View {
                 .lineLimit(1)
                 .truncationMode(.tail)
             if session.statusText == "thinking", session.pendingInteraction == nil,
-               session.lastTool != nil, let started = session.activityStartedAt {
+               let started = session.activityStartedAt {
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     Text(ActiveToolCalls.elapsedText(since: started, now: context.date))
                         .monospacedDigit()
@@ -257,7 +257,7 @@ private struct SessionRow: View {
         if let activationError { return activationError }
         if session.pendingInteraction != nil { return statusFallback }
         if session.statusText == "thinking", let tool = session.lastTool, !tool.isEmpty {
-            return ToolActivityLabel.label(for: tool)
+            return session.activityDetail ?? ToolActivityLabel.label(for: tool)
         }
         if isCompleted { return "Done" }
         return statusFallback

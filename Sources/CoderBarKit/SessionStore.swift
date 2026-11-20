@@ -14,6 +14,7 @@ public final class SessionStore: ObservableObject {
         public var lastEvent: String?
         public var lastTool: String?
         public var activityStartedAt: Date? = nil
+        public var activityDetail: String? = nil
         var activeToolCalls = ActiveToolCalls()
         public var lastUserMessage: String?
         public var lastAssistantMessage: String?
@@ -212,10 +213,16 @@ public final class SessionStore: ObservableObject {
                     s.activeToolCalls.finish(id: p.toolUseId, name: p.toolName)
                     s.lastTool = s.activeToolCalls.currentTool
                 } else if ["pretooluse", "beforetool"].contains(cat), let tool = p.toolName {
-                    s.activeToolCalls.start(id: p.toolUseId, name: tool, at: at)
+                    s.activeToolCalls.start(id: p.toolUseId, name: tool, at: at, detail: ToolActivityLabel.detail(for: tool, input: p.toolInput))
                     s.lastTool = s.activeToolCalls.currentTool
                 }
-                s.activityStartedAt = s.activeToolCalls.currentStartedAt
+                s.activityDetail = s.activeToolCalls.currentDetail
+                if source == "claude" || source == "claude_desktop" {
+                    if cat == "userpromptsubmit" { s.activityStartedAt = at }
+                    else if isEnd || Self.isWaitingEvent(cat) || cat == "stopfailure" { s.activityStartedAt = nil }
+                } else {
+                    s.activityStartedAt = s.activeToolCalls.currentStartedAt
+                }
             }
             if !isEnd {
                 s.endedAt = nil
@@ -362,6 +369,7 @@ public final class SessionStore: ObservableObject {
                     session.lastEvent = snapshot.lastEvent
                     session.lastTool = snapshot.lastTool
                     session.activityStartedAt = snapshot.activityStartedAt
+                    session.activityDetail = snapshot.activityDetail
                 }
                 if session != previous {
                     sessions[index] = session
@@ -379,6 +387,7 @@ public final class SessionStore: ObservableObject {
                     lastEvent: snapshot.lastEvent,
                     lastTool: snapshot.lastTool,
                     activityStartedAt: snapshot.activityStartedAt,
+                    activityDetail: snapshot.activityDetail,
                     lastUserMessage: snapshot.lastUserMessage,
                     lastAssistantMessage: snapshot.lastAssistantMessage,
                     planItems: snapshot.planItems,

@@ -1,5 +1,12 @@
 /// Human-readable labels for known tool operations; unknown tool names remain intact.
 public enum ToolActivityLabel {
+    /// Use the agent-authored command summary, never raw shell arguments or file contents.
+    public static func detail(for tool: String, input: [String: AnyValue]?) -> String? {
+        guard tool == "Bash", let description = input?["description"]?.stringValue else { return nil }
+        let text = description.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
+        return text.isEmpty ? nil : String(text.prefix(300))
+    }
+
     public static func label(for tool: String) -> String {
         let name = tool.lowercased().replacingOccurrences(of: "functions.", with: "")
         switch name {

@@ -2,17 +2,18 @@ import Foundation
 
 /// Tracks unfinished calls rather than retaining the last tool indefinitely.
 public struct ActiveToolCalls: Equatable {
-    private struct Call: Equatable { let id: String; let name: String; let startedAt: Date? }
+    private struct Call: Equatable { let id: String; let name: String; let startedAt: Date?; let detail: String? }
     private var calls: [Call] = []
     public var currentTool: String? { calls.last?.name }
+    public var currentDetail: String? { calls.last?.detail }
     public var currentStartedAt: Date? { calls.last?.startedAt }
 
     public init() {}
-    public mutating func start(id: String?, name: String, at: Date? = nil) {
+    public mutating func start(id: String?, name: String, at: Date? = nil, detail: String? = nil) {
         let key = id ?? "unidentified:\(name)"
         if calls.contains(where: { $0.id == key }) { return }
         calls.removeAll { $0.id == key }
-        calls.append(Call(id: key, name: name, startedAt: at))
+        calls.append(Call(id: key, name: name, startedAt: at, detail: detail))
     }
     public mutating func finish(id: String?, name: String? = nil) {
         if let id { calls.removeAll { $0.id == id } }
