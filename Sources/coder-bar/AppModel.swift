@@ -78,9 +78,6 @@ final class AppModel: ObservableObject {
     @Published var showModel: Bool {
         didSet { UserDefaults.standard.set(showModel, forKey: "showModel") }
     }
-    @Published var showReasoningEffort: Bool {
-        didSet { UserDefaults.standard.set(showReasoningEffort, forKey: "showReasoningEffort") }
-    }
     @Published var showTasks: Bool {
         didSet {
             UserDefaults.standard.set(showTasks, forKey: "showTasks")
@@ -223,8 +220,6 @@ final class AppModel: ObservableObject {
         showProjectName = d.object(forKey: "showProjectName") == nil
             ? true : d.bool(forKey: "showProjectName")
         showModel = d.object(forKey: "showModel") == nil ? true : d.bool(forKey: "showModel")
-        showReasoningEffort = d.object(forKey: "showReasoningEffort") == nil
-            ? true : d.bool(forKey: "showReasoningEffort")
         showTasks = d.object(forKey: "showTasks") == nil ? true : d.bool(forKey: "showTasks")
         showSubagents = d.object(forKey: "showSubagents") == nil
             ? true : d.bool(forKey: "showSubagents")

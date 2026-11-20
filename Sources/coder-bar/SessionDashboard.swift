@@ -35,7 +35,6 @@ struct SessionDashboard: View {
                         showActivity: model.showActivity,
                         showProjectName: model.showProjectName,
                         showModel: model.showModel,
-                        showReasoningEffort: model.showReasoningEffort,
                         contentFontSize: model.contentFontSize
                     )
                     .frame(height: IslandMetrics.rowHeight(
@@ -97,7 +96,6 @@ private struct SessionRow: View {
     let showActivity: Bool
     let showProjectName: Bool
     let showModel: Bool
-    let showReasoningEffort: Bool
     let contentFontSize: Double
 
     @State private var isHovering = false
@@ -338,12 +336,7 @@ private struct SessionRow: View {
     }
 
     private var modelBadgeText: String {
-        [showModel ? formattedModel : nil, showReasoningEffort ? formattedEffort : nil]
-            .compactMap { value in
-                guard let value, !value.isEmpty else { return nil }
-                return value
-            }
-            .joined(separator: " · ")
+        showModel ? (formattedModel ?? "") : ""
     }
 
     private var formattedModel: String? {
@@ -362,15 +355,6 @@ private struct SessionRow: View {
                 return value.prefix(1).uppercased() + value.dropFirst()
             }
             .joined(separator: "-")
-    }
-
-    private var formattedEffort: String? {
-        guard let effort = session.reasoningEffort, !effort.isEmpty else { return nil }
-        switch effort.lowercased() {
-        case "xhigh": return "XHigh"
-        case "xlow": return "XLow"
-        default: return effort.prefix(1).uppercased() + effort.dropFirst()
-        }
     }
 
     private var durationText: String {
@@ -1041,9 +1025,6 @@ private struct ChildAgentsCard: View {
                 model = "GPT-" + model.dropFirst("gpt-".count)
             }
             parts.append(model)
-        }
-        if let effort = item.reasoningEffort, !effort.isEmpty {
-            parts.append(effort.lowercased() == "xhigh" ? "XHigh" : effort.capitalized)
         }
         return parts.joined(separator: " · ")
     }

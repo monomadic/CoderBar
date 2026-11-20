@@ -189,7 +189,6 @@ struct SettingsView: View {
             settingsGroup("Session cards") {
                 Toggle("Show project", isOn: $model.showProjectName)
                 Toggle("Show model", isOn: $model.showModel)
-                Toggle("Show reasoning effort", isOn: $model.showReasoningEffort)
                 Toggle("Show tasks", isOn: $model.showTasks)
                 Toggle("Show subagents", isOn: $model.showSubagents)
                 Toggle("Show current activity", isOn: $model.showActivity)
