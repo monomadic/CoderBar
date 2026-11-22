@@ -86,6 +86,34 @@ struct ClaudeActivityTests {
         precondition(snapshot().activityStartedAt != nil, "Timer continues between tools")
         try append(["type":"assistant","message":["stop_reason":"end_turn","content":[]]])
         precondition(snapshot().activityStartedAt == nil)
+        // Progress survives tool results, but never leaks into the next turn.
+        try append(["type":"user","message":["content":"Apply frame changes"]])
+        try append(["type":"assistant","message":["content":[["type":"text","text":"Applying the frame changes"]]]])
+        try append(["type":"assistant","message":["stop_reason":"tool_use","content":[
+            ["type":"tool_use","id":"todos","name":"TodoWrite","input":["todos":[
+                ["content":"Read editor code","status":"completed"],
+                ["content":"Add mask inspector","status":"in_progress"],
+                ["content":"Build and test","status":"pending"]
+            ]]]
+        ]]])
+        try result("todos")
+        precondition(snapshot().planItems.count == 3)
+        precondition(snapshot().activityDetail == "Add mask inspector")
+        try tool("frame", "Bash", description:"Build the editor")
+        precondition(snapshot().activityDetail == "Build the editor")
+        try result("frame")
+        precondition(snapshot().activityDetail == "Add mask inspector")
+        try append(["type":"assistant","message":["stop_reason":"tool_use","content":[
+            ["type":"tool_use","id":"clear","name":"TodoWrite","input":["todos":[]]]
+        ]]])
+        try result("clear")
+        precondition(snapshot().planItems.isEmpty)
+        precondition(snapshot().activityDetail == "Applying the frame changes")
+        try append(["type":"assistant","message":["stop_reason":"end_turn","content":[]]])
+        precondition(snapshot().activityDetail == nil)
+        try append(["type":"user","message":["content":"Another task"]])
+        precondition(snapshot().activityDetail == nil)
+        precondition(snapshot().planItems.isEmpty)
         let store = try SessionStore(dataDir:home.appendingPathComponent("store"),replayOnStart:false)
         func hook(_ event: String, _ id: String? = nil, _ name: String? = nil) {
             var p = HookPayload(); p.source="claude";p.sessionId="hook-session";p.hookEventName=event;p.toolUseId=id;p.toolName=name

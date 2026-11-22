@@ -732,7 +732,7 @@ public enum DesktopSessionDiscovery {
                 activeChildAgentIDs: [],
                 lastUserMessage: activity.lastUserMessage,
                 lastAssistantMessage: activity.lastAssistantMessage,
-                planItems: [],
+                planItems: activity.planItems,
                 rateLimitWindows: [],
                 childAgents: [],
                 pendingInteraction: activity.pendingInteraction
@@ -802,6 +802,8 @@ public enum DesktopSessionDiscovery {
         var turnStartedAt: Date?
         var lastUserMessage: String?
         var lastAssistantMessage: String?
+        var planItems: [PlanItem] = []
+        var currentProgress: String?
         var statusText: String?
         var pendingTools: [String: PendingInteraction] = [:]
         var pendingOrder: [String] = []
@@ -815,6 +817,17 @@ public enum DesktopSessionDiscovery {
                 if let content = message["content"] as? [[String: Any]] {
                     for block in content where block["type"] as? String == "tool_use" {
                         if let name = block["name"] as? String {
+                            if name == "TodoWrite",
+                               let input = block["input"] as? [String: Any],
+                               let todos = input["todos"] as? [[String: Any]] {
+                                planItems = todos.compactMap { todo in
+                                    guard let title = todo["content"] as? String,
+                                          let status = todo["status"] as? String,
+                                          let cleanTitle = cleanMessage(title)
+                                    else { return nil }
+                                    return PlanItem(title: cleanTitle, status: status)
+                                }
+                            }
                             activeTools.start(id: block["id"] as? String, name: name, at: ActiveToolCalls.timestamp(object["timestamp"]), detail: ToolActivityLabel.detail(for: name, input: anyValueObject(block["input"])))
                             statusText = "thinking"
                         }
@@ -833,12 +846,14 @@ public enum DesktopSessionDiscovery {
                     }
                     if let text = content.last(where: { $0["type"] as? String == "text" })?["text"] as? String {
                         lastAssistantMessage = cleanMessage(text)
+                        currentProgress = lastAssistantMessage
                     }
                 }
                 let stopReason = message["stop_reason"] as? String
                 if stopReason == "end_turn" {
                     statusText = "waiting"
                     turnStartedAt = nil
+                    currentProgress = nil
                     activeTools.reset()
                     pendingTools.removeAll()
                     pendingOrder.removeAll()
@@ -861,6 +876,8 @@ public enum DesktopSessionDiscovery {
                 if let text = directText ?? blockText {
                     if object["isMeta"] as? Bool != true,
                        !(blocks ?? []).contains(where: { $0["type"] as? String == "tool_result" }) {
+                        currentProgress = nil
+                        planItems = []
                         turnStartedAt = ActiveToolCalls.timestamp(object["timestamp"])
                         activeTools.reset()
                         pendingTools.removeAll()
@@ -876,9 +893,14 @@ public enum DesktopSessionDiscovery {
             statusText: statusText ?? "waiting",
             lastTool: activeTools.currentTool,
             activityStartedAt: turnStartedAt,
-            activityDetail: activeTools.currentDetail,
+            activityDetail: statusText == "thinking"
+                ? activeTools.currentDetail
+                    ?? planItems.first(where: { $0.status == "in_progress" })?.title
+                    ?? currentProgress
+                : nil,
             lastUserMessage: lastUserMessage,
             lastAssistantMessage: lastAssistantMessage,
+            planItems: planItems,
             pendingInteraction: pendingOrder.reversed().compactMap { pendingTools[$0] }.first
         )
     }

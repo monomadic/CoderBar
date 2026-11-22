@@ -254,8 +254,9 @@ private struct SessionRow: View {
     private var activityText: String {
         if let activationError { return activationError }
         if session.pendingInteraction != nil { return statusFallback }
-        if session.statusText == "thinking", let tool = session.lastTool, !tool.isEmpty {
-            return session.activityDetail ?? ToolActivityLabel.label(for: tool)
+        if session.statusText == "thinking" {
+            if let detail = session.activityDetail, !detail.isEmpty { return detail }
+            if let tool = session.lastTool, !tool.isEmpty { return ToolActivityLabel.label(for: tool) }
         }
         if isCompleted { return "Done" }
         return statusFallback
