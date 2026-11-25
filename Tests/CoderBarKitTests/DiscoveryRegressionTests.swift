@@ -41,8 +41,23 @@ struct DiscoveryRegressionTests {
         try Data("{\"type\":\"assistant\",\"message\":{\"stop_reason\":\"tool_use\",\"content\":[]}}\n".utf8)
             .write(to: project.appendingPathComponent(cliID + ".jsonl"))
 
+        // A long-idle session must be dropped from timestamps alone. Its
+        // transcript is unreadable, so decoding it would surface a warning.
+        let staleCLI = UUID().uuidString.lowercased()
+        let staleDesktop = "local_" + UUID().uuidString.lowercased()
+        let staleRecord: [String: Any] = ["sessionId": staleDesktop, "cliSessionId": staleCLI,
+            "createdAt": 1, "lastActivityAt": 1, "isArchived": false, "title": "Idle for hours"]
+        try JSONSerialization.data(withJSONObject: staleRecord).write(to: claude.appendingPathComponent(staleDesktop + ".json"))
+        let staleTranscript = project.appendingPathComponent(staleCLI + ".jsonl")
+        try Data("{\"type\":\"user\",\"message\":{\"content\":\"old\"}}\n".utf8).write(to: staleTranscript)
+        try FileManager.default.setAttributes(
+            [.modificationDate: Date().addingTimeInterval(-3 * 60 * 60), .posixPermissions: 0],
+            ofItemAtPath: staleTranscript.path
+        )
+
         let report = DesktopSessionDiscovery.scan(home: home)
         precondition(report.warnings.isEmpty, "\(report.warnings)")
+        precondition(!report.sessions.contains { $0.sessionID == staleCLI }, "Idle Claude session must expire")
         precondition(report.sessions.contains { $0.sessionID == liveID }, "Lost open lock when another lock is closed, preview empty, or timestamp old")
         precondition(!report.sessions.contains { $0.sessionID == closedID })
         let claudeSession = report.sessions.first { $0.sessionID == cliID }

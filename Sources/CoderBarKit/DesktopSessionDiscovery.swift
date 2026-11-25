@@ -684,6 +684,18 @@ public enum DesktopSessionDiscovery {
             var activity = ActivityState(statusText: "waiting", lastTool: nil)
             let transcript = transcriptIndex[cliID]
                 ?? importedFromID.flatMap { transcriptIndex[$0] }
+
+            // Decide expiry from the record and transcript timestamps before
+            // decoding. Most records on disk are long idle, and parsing their
+            // transcripts on every scan dominated discovery time.
+            let startedAt = date(milliseconds: record.createdAt) ?? Date()
+            let savedActivityAt = date(milliseconds: record.lastActivityAt) ?? startedAt
+            let transcriptActivityAt = transcript.flatMap {
+                try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+            }
+            let lastActivityAt = max(savedActivityAt, transcriptActivityAt ?? savedActivityAt)
+            guard lastActivityAt.timeIntervalSince1970 * 1_000 >= Double(idleCutoffMS) else { continue }
+
             if let transcript {
                 do {
                     activity = try claudeActivity(at: transcript)
@@ -700,13 +712,6 @@ public enum DesktopSessionDiscovery {
                     ?? activity.activityStartedAt
             }
 
-            let startedAt = date(milliseconds: record.createdAt) ?? Date()
-            let savedActivityAt = date(milliseconds: record.lastActivityAt) ?? startedAt
-            let transcriptActivityAt = transcript.flatMap {
-                try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
-            }
-            let lastActivityAt = max(savedActivityAt, transcriptActivityAt ?? savedActivityAt)
-            guard lastActivityAt.timeIntervalSince1970 * 1_000 >= Double(idleCutoffMS) else { continue }
             snapshots.append(Snapshot(
                 id: "claude|\(cliID)",
                 source: "claude",
